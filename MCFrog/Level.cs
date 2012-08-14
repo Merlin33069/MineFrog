@@ -68,12 +68,19 @@ namespace MCFrog
 		}
 		internal Level(string _name, ushort x, ushort y, ushort z)
 		{
-			name = _name;
-			Create(x, y, z);
-			FullSave();
+			try
+			{
+				name = _name;
+				Create(x, y, z);
+				FullSave();
 
-			Server.historyController.LoadHistory(name);
-			UncompressAndCreateHandle();
+				Server.historyController.LoadHistory(name);
+				UncompressAndCreateHandle();
+			}
+			catch (Exception e)
+			{
+				Server.Log(e, LogTypesEnum.error);
+			}
 		}
 
 		void UncompressAndCreateHandle()
@@ -95,6 +102,7 @@ namespace MCFrog
 			sizeX = BitConverter.ToUInt16(header, 64);
 			sizeY = BitConverter.ToUInt16(header, 66);
 			sizeZ = BitConverter.ToUInt16(header, 68);
+			Server.Log("Loading level " + name + " which is " + sizeX + "x" + sizeY + "x" + sizeZ, LogTypesEnum.debug);
 			spawnPos = new pos();
 			spawnPos.x = BitConverter.ToUInt16(header, 70);
 			spawnPos.y = BitConverter.ToUInt16(header, 72);

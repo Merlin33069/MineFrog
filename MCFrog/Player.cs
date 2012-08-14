@@ -458,6 +458,11 @@ namespace MCFrog
 						{
 							SendMessage("Generating new level: " + command[2]);
 							l = new Level(command[2], 64, 64, 64);
+							if (l == null)
+							{
+								SendMessage("New level command FAILED!");
+								return;
+							}
 							Player.SendGlobalMessage("NEW LEVEL: " + l.name);
 						}
 					}
@@ -534,6 +539,31 @@ namespace MCFrog
 				{
 					SendMessage("You have to enter a name to switch levels!");
 					return;
+				}
+				else if (command.Length == 4)
+				{
+					try
+					{
+						ushort x = Convert.ToUInt16(command[1]);
+						ushort y = Convert.ToUInt16(command[1]);
+						ushort z = Convert.ToUInt16(command[1]);
+
+						pos newPosition = new pos();
+						newPosition.x = x;
+						newPosition.y = y;
+						newPosition.z = z;
+						newPosition.yaw = 0;
+						newPosition.pitch = 0;
+
+						SendTeleportThisPlayer(newPosition);
+
+						return;
+					}
+					catch
+					{
+						SendMessage("Goto Failed!");
+						return;
+					}
 				}
 				else
 				{
@@ -637,12 +667,13 @@ namespace MCFrog
 
 			SendRaw(2);
 
-			byte[] buffer = new byte[level.blocks.Length + 4];
-			BitConverter.GetBytes(IPAddress.HostToNetworkOrder(level.blocks.Length)).CopyTo(buffer, 0);
+			byte[] mapSize = new byte[4];
+			BitConverter.GetBytes(IPAddress.HostToNetworkOrder(level.blocks.Length)).CopyTo(mapSize, 0);
 
-			level.blocks.CopyTo(buffer, 4);
-			
-			buffer = GZip(buffer);
+			//level.blocks.CopyTo(buffer, 4);
+			//int bufferLength = level.blocks.Length + 4;
+
+			byte[] buffer = GZip(mapSize, level.blocks);
 			int number = (int)Math.Ceiling(((double)buffer.Length) / 1024);
 			for (int i = 1; buffer.Length > 0; ++i)
 			{
@@ -673,7 +704,7 @@ namespace MCFrog
 
 			SendAllSpawns();
 
-			SendTeleportThisPlayer(level.spawnPos);
+			//SendTeleportThisPlayer(level.spawnPos);
 
 			Server.Log("map done", LogTypesEnum.debug);
 		}
@@ -821,6 +852,10 @@ namespace MCFrog
 			oldPosition = position;
 			position = newPosition;
 
+			newPosition.x = 64;
+			newPosition.y = 64;
+			newPosition.z = 64;
+
 			Packet p = new Packet();
 			p.id = PacketType.PositionAndOrientationTeleport;
 			p.AddVar((byte)255);
@@ -851,13 +886,21 @@ namespace MCFrog
 			SendPacket(p);
 		}
 
-		public static byte[] GZip(byte[] bytes)
+		public static byte[] GZip(byte[] mapSize, byte[] levelData)
 		{
 			System.IO.MemoryStream ms = new System.IO.MemoryStream();
 			GZipStream gs = new GZipStream(ms, CompressionMode.Compress, true);
-			gs.Write(bytes, 0, bytes.Length); gs.Close(); gs.Dispose();
-			ms.Position = 0; bytes = new byte[ms.Length];
-			ms.Read(bytes, 0, (int)ms.Length); ms.Close(); ms.Dispose();
+			gs.Write(mapSize, 0, mapSize.Length);
+			gs.Write(levelData, 0, levelData.Length); 
+			
+			gs.Flush();
+			gs.Dispose();
+			
+			ms.Position = 0;
+			byte[] bytes = new byte[ms.Length];
+			ms.Read(bytes, 0, (int)ms.Length);
+			ms.Close();
+			ms.Dispose();
 			return bytes;
 		}
 		byte[] HTNO(short x)
