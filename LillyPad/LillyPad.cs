@@ -1,51 +1,37 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
-using System.Threading;
-
 using MCFrog;
-using MCFrog.History;
 using MCFrog.Database;
 using MCFrog.HeartBeat;
+using MCFrog.History;
 
 namespace LillyPad
 {
-	public class LillyPad
-	{
-		ConnectionHandler connectionHandler;
-		PlayerHandler playerHandler;
-		LevelHandler levelHandler;
+    public class LillyPad
+    {
+        //ConnectionHandler _connectionHandler;
+        //PlayerHandler _playerHandler;
+        //LevelHandler _levelHandler;
 
-		public static int version
-		{
-			get
-			{
-				return MCFrog.Server.version;
-			}
-		}
+        private static AppDomain _historyAppDomain;
 
-		static AppDomain HistoryAppDomain;
-		HistoryController historyController;
+        private static AppDomain _databaseAppDomain;
 
-		static AppDomain DatabaseAppDomain;
-		DatabaseController databaseController; 
+        private static AppDomain _heartBeatDomain;
 
-		static AppDomain HeartBeatDomain;
-		HeartBeat heartBeater;
+        private static AppDomain _serverDomain;
+        private readonly DatabaseController _databaseController;
+        private readonly HistoryController _historyController;
+        private readonly Server _server;
+        private HeartBeat _heartBeater;
 
-		static AppDomain ServerDomain;
-		MCFrog.Server server;
+        //Database database;
 
-		//Database database;
-		
-		//Server
+        //Server
 
-		public LillyPad()
-		{
-			InputOutput.InitLogTypes();
-			/*
+        public LillyPad()
+        {
+            InputOutput.InitLogTypes();
+            /*
 			 * The LillyPad System simply takes each subsystem and starts it
 			 * in its own thread, doing this allows us to desync the entire
 			 * system and restart subsystems without restarting the whole
@@ -53,55 +39,68 @@ namespace LillyPad
 			 * 
 			 */
 
-			HistoryAppDomain = AppDomain.CreateDomain("History_AppDomain");
-			Type t = typeof(MCFrog.History.HistoryController);
-			historyController = (MCFrog.History.HistoryController)HistoryAppDomain.CreateInstanceAndUnwrap("MCFrog", t.FullName);
+            _historyAppDomain = AppDomain.CreateDomain("History_AppDomain");
+            Type t = typeof (HistoryController);
+            if (t.FullName != null)
+                _historyController = (HistoryController) _historyAppDomain.CreateInstanceAndUnwrap("MCFrog", t.FullName);
 
-			DatabaseAppDomain = AppDomain.CreateDomain("Database_AppDomain");
-			t = typeof(MCFrog.Database.DatabaseController);
-			databaseController = (MCFrog.Database.DatabaseController)DatabaseAppDomain.CreateInstanceAndUnwrap("MCFrog", t.FullName);
+            _databaseAppDomain = AppDomain.CreateDomain("Database_AppDomain");
+            t = typeof (DatabaseController);
+            if (t.FullName != null)
+                _databaseController =
+                    (DatabaseController) _databaseAppDomain.CreateInstanceAndUnwrap("MCFrog", t.FullName);
 
-			HeartBeatDomain = AppDomain.CreateDomain("HeartBeat_AppDomain");
-			t = typeof(MCFrog.HeartBeat.HeartBeat);
-			heartBeater = (MCFrog.HeartBeat.HeartBeat)HistoryAppDomain.CreateInstanceAndUnwrap("MCFrog", t.FullName);
+            _heartBeatDomain = AppDomain.CreateDomain("HeartBeat_AppDomain");
+            t = typeof (HeartBeat);
+            if (t.FullName != null)
+                _heartBeater = (HeartBeat) _historyAppDomain.CreateInstanceAndUnwrap("MCFrog", t.FullName);
 
-			Server.Log("Starting Server SybSystems...", LogTypesEnum.system);
+            Server.Log("Starting Server SybSystems...", LogTypesEnum.System);
 
-			ServerDomain = AppDomain.CreateDomain("Server_AppDomain");
-			t = typeof(MCFrog.Server);
-			server = (MCFrog.Server)ServerDomain.CreateInstanceAndUnwrap("MCFrog", t.FullName);
+            _serverDomain = AppDomain.CreateDomain("Server_AppDomain");
+            t = typeof (Server);
+            if (t.FullName != null)
+                _server = (Server) _serverDomain.CreateInstanceAndUnwrap("MCFrog", t.FullName);
 
-			server.historyControllerNS = historyController;
-			server.databaseControllerNS = databaseController;
-			server.Start();
+            _server.HistoryControllerNS = _historyController;
+            _server.DatabaseControllerNS = _databaseController;
+            _server.Start();
 
-			//new Thread(new ThreadStart(StartServer)).Start();
-			//new Thread(new ThreadStart(StartConnectionHandler)).Start();
-			//new Thread(new ThreadStart(StartPlayerHandler)).Start();
-			//new Thread(new ThreadStart(StartLevelHandler)).Start();
+            //new Thread(new ThreadStart(StartServer)).Start();
+            //new Thread(new ThreadStart(StartConnectionHandler)).Start();
+            //new Thread(new ThreadStart(StartPlayerHandler)).Start();
+            //new Thread(new ThreadStart(StartLevelHandler)).Start();
 
-			Server.StartInput();
-		}
+            Server.StartInput();
+        }
 
+        public static int Version
+        {
+            get { return Server.Version; }
+        }
+
+/*
 		void StartServer()
 		{
 			Server.Log("Starting Server...", LogTypesEnum.system);
 			//server = new Server(historyController);
 		}
+
 		void StartConnectionHandler()
 		{
 			Server.Log("Starting ConnectionHandler...", LogTypesEnum.system);
-			connectionHandler = new ConnectionHandler();
+			_connectionHandler = new ConnectionHandler();
 		}
 		void StartPlayerHandler()
 		{
 			Server.Log("Starting PlayerHandler...", LogTypesEnum.system);
-			playerHandler = new PlayerHandler();
+			_playerHandler = new PlayerHandler();
 		}
 		void StartLevelHandler()
 		{
 			Server.Log("Starting LevelHandler...", LogTypesEnum.system);
-			levelHandler = new LevelHandler();
+			_levelHandler = new LevelHandler();
 		}
-	}
+ */
+    }
 }

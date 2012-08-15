@@ -1,97 +1,93 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using MCFrog.History;
-using MCFrog.Database;
 using System.Threading;
+using MCFrog.Database;
+using MCFrog.History;
 
 namespace MCFrog
 {
-	public class Server : MarshalByRefObject
-	{
-		public static bool isAlive = true;
-		public static bool shouldShutdown = false;
-		public static InputOutput input;
+    public class Server : MarshalByRefObject
+    {
+        public static bool IsAlive = true;
+        public static bool ShouldShutdown = false;
+        public static InputOutput Input;
 
-		public HistoryController historyControllerNS;
-		public static HistoryController historyController;
+        public static HistoryController HistoryController;
 
-		public DatabaseController databaseControllerNS;
-		public static DatabaseController databaseController;
+        public static DatabaseController DatabaseController;
 
-		ConnectionHandler connectionHandler;
-		PlayerHandler playerHandler;
-		LevelHandler levelHandler;
-		PerformanceMonitor performanceMonitor;
+        public static int Version = 4;
+        public DatabaseController DatabaseControllerNS;
+        public HistoryController HistoryControllerNS;
 
-		public static int version = 4;
+        public void Start()
+        {
+            HistoryController = HistoryControllerNS;
+            DatabaseController = DatabaseControllerNS;
+            InputOutput.InitLogTypes();
+            Block.Initialize();
 
-		public void Start()
-		{
-			historyController = historyControllerNS;
-			databaseController = databaseControllerNS;
-			InputOutput.InitLogTypes();
-			Block.Initialize();
+            try
+            {
+                PhysicsHandler.LoadPhysicsTypes();
 
-			try
-			{
-				PhysicsHandler.LoadPhysicsTypes();
+                new Thread(StartConnectionHandler).Start();
+                new Thread(StartPlayerHandler).Start();
+                new Thread(StartLevelHandler).Start();
+                new Thread(StartPerformanceMonitor).Start();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+                Console.WriteLine(e.StackTrace);
+            }
+            new TestClass();
+        }
 
-				new Thread(new ThreadStart(StartConnectionHandler)).Start();
-				new Thread(new ThreadStart(StartPlayerHandler)).Start();
-				new Thread(new ThreadStart(StartLevelHandler)).Start();
-				new Thread(new ThreadStart(StartPerformanceMonitor)).Start();
-			}
-			catch (Exception e)
-			{
-				Console.WriteLine(e.Message);
-				Console.WriteLine(e.StackTrace);
-			}
-				new TestClass();
-		}
+        private void StartConnectionHandler()
+        {
+            Log("Starting ConnectionHandler...", LogTypesEnum.System);
+            new ConnectionHandler();
+        }
 
-		void StartConnectionHandler()
-		{
-			Server.Log("Starting ConnectionHandler...", LogTypesEnum.system);
-			connectionHandler = new ConnectionHandler();
-		}
-		void StartPlayerHandler()
-		{
-			Server.Log("Starting PlayerHandler...", LogTypesEnum.system);
-			playerHandler = new PlayerHandler();
-		}
-		void StartLevelHandler()
-		{
-			Server.Log("Starting LevelHandler...", LogTypesEnum.system);
-			levelHandler = new LevelHandler();
-		}
-		void StartPerformanceMonitor()
-		{
-			Server.Log("Starting PerformanceMonitor...", LogTypesEnum.system);
-			performanceMonitor = new PerformanceMonitor();
-		}
+        private void StartPlayerHandler()
+        {
+            Log("Starting PlayerHandler...", LogTypesEnum.System);
+            new PlayerHandler();
+        }
 
-		public static void StartInput()
-		{
-			input = new InputOutput();
-		}
+        private void StartLevelHandler()
+        {
+            Log("Starting LevelHandler...", LogTypesEnum.System);
+            new LevelHandler();
+        }
 
-		public static void Log(string message, LogTypesEnum logTypes)
-		{
-			InputOutput.Log(message, logTypes);
-		}
+        private void StartPerformanceMonitor()
+        {
+            Log("Starting PerformanceMonitor...", LogTypesEnum.System);
+            new PerformanceMonitor();
+        }
 
-		public static void Log(Exception E, LogTypesEnum logTypes)
-		{
-			Log(E.Message, logTypes);
-			Log(E.StackTrace, logTypes);
-		}
+        public static void StartInput()
+        {
+            Input = new InputOutput();
+        }
 
-		public override object InitializeLifetimeService()
-		{
-			// returning null here will prevent the lease manager
-			// from deleting the object.
-			return null;
-		}
-	}
+        public static void Log(string message, LogTypesEnum logTypes)
+        {
+            InputOutput.Log(message, logTypes);
+        }
+
+        public static void Log(Exception e, LogTypesEnum logTypes)
+        {
+            Log(e.Message, logTypes);
+            Log(e.StackTrace, logTypes);
+        }
+
+        public override object InitializeLifetimeService()
+        {
+            // returning null here will prevent the lease manager
+            // from deleting the object.
+            return null;
+        }
+    }
 }

@@ -1,417 +1,429 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.IO;
 using System.IO.Compression;
+using System.Linq;
+using System.Text;
 
 namespace MCFrog
 {
-	public class Level
-	{
-		ASCIIEncoding encode = new ASCIIEncoding();
-		internal byte[] blocks;
+    public class Level
+    {
+        private const string LevelFolder = "levels";
+        private const string CompressedExtension = ".LvC";
+        private const string BackupExtension = ".bak";
+        private const int HeaderSize = 80;
+        private readonly ASCIIEncoding _encode = new ASCIIEncoding();
+        //private readonly FileStream _fileHandle;
+        internal byte[] BlockData;
+        internal bool IsUnloaded = false;
 
-		internal string name;
-		internal ushort sizeX, sizeY, sizeZ;
-		internal PhysicsHandler physics;
+        internal string Name;
+        internal PhysicsHandler Physics;
+        internal List<Player> Players = new List<Player>();
+        internal ushort SizeX;
+        internal ushort SizeY;
+        internal ushort SizeZ;
 
-		internal pos spawnPos;
+        internal Pos SpawnPos;
 
-		internal List<Player> players = new List<Player>();
-		internal bool isUnloaded = false;
+        internal Level(string fileName)
+        {
+            Load(fileName);
 
-		static string levelFolder = "levels";
-		string fileName
-		{
-			get
-			{
-				return levelFolder + "/" + name;
-			}
-		}
-		string uncompressedExtension = ".LvU";
-		string compressedExtension = ".LvC";
-		string backupExtension = ".bak";
+            Server.HistoryController.LoadHistory(Name);
+            UncompressAndCreateHandle();
+        }
 
-		string uncompressedPath
-		{
-			get
-			{
-				return fileName + uncompressedExtension;
-			}
-		}
-		string compressedPath
-		{
-			get
-			{
-				return fileName + compressedExtension;
-			}
-		}
-		string backupPath
-		{
-			get
-			{
-				return fileName + backupExtension;
-			}
-		}
+        internal Level(string name, ushort x, ushort y, ushort z)
+        {
+            try
+            {
+                Name = name;
+                Create(x, y, z);
+                FullSave();
 
-		int headerSize = 80;
+                Server.HistoryController.LoadHistory(Name);
+                UncompressAndCreateHandle();
+            }
+            catch (Exception e)
+            {
+                Server.Log(e, LogTypesEnum.Error);
+            }
+        }
 
-		FileStream fileHandle;
+        private string FileName
+        {
+            get { return LevelFolder + "/" + Name; }
+        }
 
-		internal Level(string fileName)
-		{
-			Load(fileName);
+        private string CompressedPath
+        {
+            get { return FileName + CompressedExtension; }
+        }
 
-			Server.historyController.LoadHistory(name);
-			UncompressAndCreateHandle();
-		}
-		internal Level(string _name, ushort x, ushort y, ushort z)
-		{
-			try
-			{
-				name = _name;
-				Create(x, y, z);
-				FullSave();
+        private void UncompressAndCreateHandle()
+        {
+        }
 
-				Server.historyController.LoadHistory(name);
-				UncompressAndCreateHandle();
-			}
-			catch (Exception e)
-			{
-				Server.Log(e, LogTypesEnum.error);
-			}
-		}
+        private void Load(string name)
+        {
+            string tempPath = LevelFolder + "/" + name + CompressedExtension;
+            if (!File.Exists(tempPath)) throw new FileNotFoundException("Could not find file!", tempPath);
 
-		void UncompressAndCreateHandle()
-		{
+            var fileStream = new FileStream(tempPath, FileMode.Open);
+            var gzipStream = new GZipStream(fileStream, CompressionMode.Decompress);
 
-		}
+            var header = new byte[HeaderSize];
+            gzipStream.Read(header, 0, HeaderSize);
+            Name = _encode.GetString(header, 0, 64).Trim();
+            SizeX = BitConverter.ToUInt16(header, 64);
+            SizeY = BitConverter.ToUInt16(header, 66);
+            SizeZ = BitConverter.ToUInt16(header, 68);
+            Server.Log("Loading level " + Name + " which is " + SizeX + "x" + SizeY + "x" + SizeZ, LogTypesEnum.Debug);
+            SpawnPos = new Pos
+                           {
+                               X = BitConverter.ToUInt16(header, 70),
+                               Y = BitConverter.ToUInt16(header, 72),
+                               Z = BitConverter.ToUInt16(header, 74),
+                               Pitch = header[76]
+                           };
+            SpawnPos.Pitch = header[77];
 
-		void Load(string _name)
-		{
-			string tempPath = levelFolder + "/" + _name + compressedExtension;
-			if (!File.Exists(tempPath)) throw new FileNotFoundException("Could not find file!", tempPath);
+            bool physics = BitConverter.ToBoolean(header, 78);
+            bool realistic = BitConverter.ToBoolean(header, 78);
 
-			FileStream fileStream = new FileStream(tempPath, FileMode.Open);
-			GZipStream gzipStream = new GZipStream(fileStream, CompressionMode.Decompress);
+            Physics = new PhysicsHandler(this, physics) {Realistic = realistic};
 
-			byte[] header = new byte[headerSize];
-			gzipStream.Read(header, 0, headerSize);
-			name = encode.GetString(header, 0, 64).Trim();
-			sizeX = BitConverter.ToUInt16(header, 64);
-			sizeY = BitConverter.ToUInt16(header, 66);
-			sizeZ = BitConverter.ToUInt16(header, 68);
-			Server.Log("Loading level " + name + " which is " + sizeX + "x" + sizeY + "x" + sizeZ, LogTypesEnum.debug);
-			spawnPos = new pos();
-			spawnPos.x = BitConverter.ToUInt16(header, 70);
-			spawnPos.y = BitConverter.ToUInt16(header, 72);
-			spawnPos.z = BitConverter.ToUInt16(header, 74);
-			spawnPos.pitch = header[76];
-			spawnPos.pitch = header[77];
+            int blockCount = SizeX*SizeY*SizeZ;
+            BlockData = new byte[blockCount];
+            gzipStream.Read(BlockData, 0, blockCount);
 
-			bool physics = BitConverter.ToBoolean(header, 78);
-			bool realistic = BitConverter.ToBoolean(header, 78);
+            gzipStream.Close();
+            fileStream.Close();
 
-			this.physics = new PhysicsHandler(this, physics);
-			this.physics.realistic = realistic;
+            LevelHandler.Levels.Add(this);
+        }
 
-			int blockCount = sizeX * sizeY * sizeZ;
-			blocks = new byte[blockCount];
-			gzipStream.Read(blocks, 0, blockCount);
+        private void Create(ushort inx, ushort iny, ushort inz) //todo add type
+        {
+            SizeX = inx;
+            SizeY = iny;
+            SizeZ = inz;
 
-			gzipStream.Close();
-			fileStream.Close();
+            SpawnPos = new Pos
+                           {
+                               X = (ushort) ((SizeX*32)/2),
+                               Y = (ushort) (((SizeY*32)/2) + 64),
+                               Z = (ushort) ((SizeZ*32)/2),
+                               Pitch = 0,
+                               Yaw = 0
+                           };
 
-			LevelHandler.levels.Add(this);
-		}
-		void Create(ushort inx, ushort iny, ushort inz) //todo add type
-		{
-			sizeX = inx;
-			sizeY = iny;
-			sizeZ = inz;
+            BlockData = new byte[SizeX*SizeY*SizeZ];
 
-			spawnPos = new pos { x = (ushort)((sizeX * 32) / 2), y = (ushort)(((sizeY * 32) / 2) + 64), z = (ushort)((sizeZ * 32) / 2), pitch = 0, yaw = 0 };
+            var half = (ushort) (SizeY/2);
+            for (ushort x = 0; x < SizeX; ++x)
+            {
+                for (ushort z = 0; z < SizeZ; ++z)
+                {
+                    for (ushort y = 0; y < SizeY; ++y)
+                    {
+                        if (y != half)
+                        {
+                            SetTile(x, y, z, (byte) ((y >= half) ? Blocks.Air : Blocks.Dirt));
+                        }
+                        else
+                        {
+                            SetTile(x, y, z, (byte) Blocks.Grass);
+                        }
+                    }
+                }
+            }
 
-			blocks = new byte[sizeX * sizeY * sizeZ];
+            Physics = new PhysicsHandler(this, true);
 
-			ushort half = (ushort)(sizeY / 2);
-			for (ushort x = 0; x < sizeX; ++x)
-			{
-				for (ushort z = 0; z < sizeZ; ++z)
-				{
-					for (ushort y = 0; y < sizeY; ++y)
-					{
-						if (y != half)
-						{
-							SetTile(x, y, z, (byte)((y >= half) ? Blocks.Air : Blocks.Dirt));
-						}
-						else
-						{
-							SetTile(x, y, z, (byte)Blocks.Grass);
-						}
-					}
-				}
-			}
+            LevelHandler.Levels.Add(this);
+        }
 
-			physics = new PhysicsHandler(this, true);
+        internal void Unload()
+        {
+            LevelHandler.Levels.Remove(this);
 
-			LevelHandler.levels.Add(this);
+            foreach (Player p in PlayerHandler.Players.Values.ToArray())
+            {
+                if (p.OldLevel == this) p.OldLevel = null;
+                if (p.Level == this) p.SwitchMap(LevelHandler.Lobby);
+            }
 
-		}
-		internal void Unload()
-		{
-			LevelHandler.levels.Remove(this);
+            foreach (Player pl in Players.ToArray())
+            {
+                pl.SendKick("Internal Error (level has been unloaded)");
+            }
 
-			foreach (Player p in PlayerHandler.Players.Values.ToArray())
-			{
-				if (p.oldLevel == this) p.oldLevel = null;
-				if (p.level == this) p.SwitchMap(LevelHandler.lobby);
-			}
+            FullSave();
 
-			foreach (Player pl in players.ToArray())
-			{
-				try
-				{
-					pl.SendKick("Internal Error (level has been unloaded)");
-				}
-				catch { }
-			}
+            Physics.ShouldStop = true;
+            Physics = null;
 
-			FullSave();
 
-			physics.shouldStop = true;
-			physics = null;
+            BlockData = new byte[0];
+        }
 
-			
-			blocks = new byte[0];
-		}
-		internal void FullSave()
-		{
-			/*
+        internal void FullSave()
+        {
+            /*
 			 * All we need to do here is dump our level blocks to the file
 			 * 
 			 * we dont need to close the filehandle for the uncompressed version
 			 */
 
 
-			Server.Log("Full Save Directory check...", LogTypesEnum.debug);
-			DirectoryCheck();
+            Server.Log("Full Save Directory check...", LogTypesEnum.Debug);
+            DirectoryCheck();
 
-			Server.Log("Backup old file...", LogTypesEnum.debug);
-			if (File.Exists(fileName + compressedExtension))
-			{
-				if (File.Exists(fileName + compressedExtension + backupExtension)) File.Delete(fileName + compressedExtension + backupExtension);
-				File.Copy(fileName + compressedExtension, fileName + compressedExtension + backupExtension);
-			}
+            Server.Log("Backup old file...", LogTypesEnum.Debug);
+            if (File.Exists(FileName + CompressedExtension))
+            {
+                if (File.Exists(FileName + CompressedExtension + BackupExtension))
+                    File.Delete(FileName + CompressedExtension + BackupExtension);
+                File.Copy(FileName + CompressedExtension, FileName + CompressedExtension + BackupExtension);
+            }
 
-			Server.Log("Saving new File...", LogTypesEnum.debug);
-			FileStream fileStream = new FileStream(compressedPath, FileMode.Create);
-			GZipStream gzipStream = new GZipStream(fileStream, CompressionMode.Compress);
+            Server.Log("Saving new File...", LogTypesEnum.Debug);
+            var fileStream = new FileStream(CompressedPath, FileMode.Create);
+            var gzipStream = new GZipStream(fileStream, CompressionMode.Compress);
 
-			gzipStream.Write(encode.GetBytes(name.PadRight(64)), 0, 64);
-			gzipStream.Write(BitConverter.GetBytes(sizeX), 0, 2);
-			gzipStream.Write(BitConverter.GetBytes(sizeY), 0, 2);
-			gzipStream.Write(BitConverter.GetBytes(sizeZ), 0, 2);
-			gzipStream.Write(BitConverter.GetBytes(spawnPos.x), 0, 2);
-			gzipStream.Write(BitConverter.GetBytes(spawnPos.y), 0, 2);
-			gzipStream.Write(BitConverter.GetBytes(spawnPos.z), 0, 2);
-			gzipStream.WriteByte(spawnPos.pitch);
-			gzipStream.WriteByte(spawnPos.yaw);
-			gzipStream.Write(BitConverter.GetBytes(physics.isEnabled), 0, 1);
-			gzipStream.Write(BitConverter.GetBytes(physics.realistic), 0, 1);
+            gzipStream.Write(_encode.GetBytes(Name.PadRight(64)), 0, 64);
+            gzipStream.Write(BitConverter.GetBytes(SizeX), 0, 2);
+            gzipStream.Write(BitConverter.GetBytes(SizeY), 0, 2);
+            gzipStream.Write(BitConverter.GetBytes(SizeZ), 0, 2);
+            gzipStream.Write(BitConverter.GetBytes(SpawnPos.X), 0, 2);
+            gzipStream.Write(BitConverter.GetBytes(SpawnPos.Y), 0, 2);
+            gzipStream.Write(BitConverter.GetBytes(SpawnPos.Z), 0, 2);
+            gzipStream.WriteByte(SpawnPos.Pitch);
+            gzipStream.WriteByte(SpawnPos.Yaw);
+            gzipStream.Write(BitConverter.GetBytes(Physics.IsEnabled), 0, 1);
+            gzipStream.Write(BitConverter.GetBytes(Physics.Realistic), 0, 1);
 
-			gzipStream.Write(blocks, 0, blocks.Length);
+            gzipStream.Write(BlockData, 0, BlockData.Length);
 
-			gzipStream.Flush();
-			gzipStream.Close();
-			//fileStream.Flush();
-			fileStream.Close();
+            gzipStream.Flush();
+            gzipStream.Close();
+            //fileStream.Flush();
+            fileStream.Close();
 
-			Console.WriteLine("Done?");
+            Console.WriteLine("Done?");
+        }
 
-		}
-		internal void BlockSave(int pos)
-		{
-			int filePos = pos + headerSize;
+        //internal void BlockSave(int pos)
+        //{
+        //    int filePos = pos + HeaderSize;
 
-			fileHandle.Position = filePos;
-			fileHandle.WriteByte(blocks[pos]);
+        //    _fileHandle.Position = filePos;
+        //    _fileHandle.WriteByte(BlockData[pos]);
 
-			//TODO test even if thsi will work?
-		}
+        //    //TODO test even if thsi will work?
+        //}
 
-		void DirectoryCheck()
-		{
-			if (!Directory.Exists(levelFolder))
-				Directory.CreateDirectory(levelFolder);
-		}
+        private void DirectoryCheck()
+        {
+            if (!Directory.Exists(LevelFolder))
+                Directory.CreateDirectory(LevelFolder);
+        }
 
-		internal bool SetTile(ushort x, ushort y, ushort z, byte type)
-		{
-			if (NotInBounds(x, y, z)) { Server.Log("Out of bounds?", LogTypesEnum.debug); return false; }
-			blocks[PosToInt(x, y, z)] = type;
+        internal bool SetTile(ushort x, ushort y, ushort z, byte type)
+        {
+            if (NotInBounds(x, y, z))
+            {
+                Server.Log("Out of bounds?", LogTypesEnum.Debug);
+                return false;
+            }
+            BlockData[PosToInt(x, y, z)] = type;
 
-			if (physics != null)
-				for (int _X = -1; _X < 2; ++_X)
-					for (int _Y = -1; _Y < 2; ++_Y)
-						for (int _Z = -1; _Z < 2; ++_Z)
-						{
-							BlockPos blockPos = new BlockPos(x + _X, y + _Y, z + _Z);
-							
-							if (NotInBounds(blockPos)) continue;
-							int pos = PosToInt(blockPos);
-							if (blocks[pos] == 0) continue;
-							if (physics.PhysicsUpdates.Contains(pos)) continue;
-							physics.PhysicsUpdates.Add(pos);
-						}
+            if (Physics != null)
+                PhysicsCheck(x, y, z);
 
-			return true;
-		}
-		internal bool BlockChange(ushort x, ushort y, ushort z, byte type)
-		{
-			if (SetTile(x, y, z, type))
-			{
-				foreach (Player p in players.ToArray())
-				{
-					if (p._isActive)
-					{
-						if (p.level == this)
-						{
-							p.SendBlockChange(x, y, z, type);
-						}
-					}
-				}
-				return true;
-			}
-			else
-			{
-				return false;
-			}
-		}
-		internal bool PlayerBlockChange(Player changer, ushort x, ushort y, ushort z, byte type)
-		{
-			if (BlockChange(x, y, z, type))
-			{
-				try
-				{
-					Server.historyController.SetData(name, PosToInt(x, y, z), type, changer.UID);
-				}
-				catch (Exception e)
-				{
-					Console.WriteLine(e.Message);
-					Console.WriteLine(e.StackTrace);
-				}
-				return true;
-			}
-			return false;
-		}
-		internal bool PhysicsBlockChange(BlockPos pos, byte type)
-		{
-			if (BlockChange(pos.x, pos.y, pos.z, type))
-			{
-				try
-				{
-					//Server.historyController.SetData(name, PosToInt(pos.x, pos.y, pos.z), type, 0);
-				}
-				catch (Exception e)
-				{
-					Console.WriteLine(e.Message);
-					Console.WriteLine(e.StackTrace);
-				}
-				return true;
-			}
-			return false;
-		}
-		internal bool PhysicsBlockChange(BlockPos pos, Blocks type)
-		{
-			return PhysicsBlockChange(pos, (byte)type);
-		}
+            return true;
+        }
 
-		internal byte GetTile(ushort x, ushort y, ushort z)
-		{
-			if (NotInBounds(x, y, z)) { Server.Log("Out of bounds?", LogTypesEnum.debug); return 255; }
-			return blocks[PosToInt(x, y, z)];
-		}
-		internal Blocks GetTile(BlockPos pos)
-		{
-			return (Blocks)GetTile(pos.x, pos.y, pos.z);
-		}
-		internal Blocks GetTile(BlockPos pos, int diffX, int diffY, int diffZ)
-		{
-			ushort x = (ushort)(pos.x + diffX);
-			ushort y = (ushort)(pos.y + diffY);
-			ushort z = (ushort)(pos.z + diffZ);
+        internal void PhysicsCheck(ushort inX, ushort inY, ushort inZ)
+        {
+            for (int x = -1; x < 2; ++x)
+                for (int y = -1; y < 2; ++y)
+                    for (int z = -1; z < 2; ++z)
+                    {
+                        var blockPos = new BlockPos(inX + x, inY + y, inZ + z);
 
-			return (Blocks)GetTile(x, y, z);
-		}
+                        if (NotInBounds(blockPos)) continue;
+                        int pos = PosToInt(blockPos);
+                        if (BlockData[pos] == 0) continue;
+                        if (Physics.PhysicsUpdates.Contains(pos)) continue;
+                        Physics.PhysicsUpdates.Add(pos);
+                    }
+        }
 
-		public bool NotInBounds(ushort x, ushort y, ushort z)
-		{
-			return (x >= sizeX || y >= sizeY || z >= sizeZ);
-		}
-		public bool NotInBounds(BlockPos pos)
-		{
-			return NotInBounds(pos.x, pos.y, pos.z);
-		}
+        internal bool BlockChange(ushort x, ushort y, ushort z, byte type)
+        {
+            if (SetTile(x, y, z, type))
+            {
+                foreach (Player p in Players.ToArray())
+                {
+                    if (p.IsActive)
+                    {
+                        if (p.Level == this)
+                        {
+                            p.SendBlockChange(x, y, z, type);
+                        }
+                    }
+                }
+                return true;
+            }
+            return false;
+        }
 
-		public int PosToInt(ushort x, ushort y, ushort z)
-		{
-			if (x < 0) { return -1; }
-			if (x >= sizeX) { return -1; }
-			if (y < 0) { return -1; }
-			if (y >= sizeY) { return -1; }
-			if (z < 0) { return -1; }
-			if (z >= sizeZ) { return -1; }
-			return x + z * sizeX + y * sizeX * sizeZ;
-		}
-		public int PosToInt(BlockPos pos)
-		{
-			return PosToInt(pos.x, pos.y, pos.z);
-		}
-		public BlockPos IntToPos(int pos)
-		{
-			ushort x;
-			ushort y;
-			ushort z;
-			y = (ushort)(pos / sizeX / sizeZ); pos -= y * sizeX * sizeZ;
-			z = (ushort)(pos / sizeX); pos -= z * sizeX; x = (ushort)pos;
+        internal bool PlayerBlockChange(Player changer, ushort x, ushort y, ushort z, byte type)
+        {
+            if (BlockChange(x, y, z, type))
+            {
+                try
+                {
+                    Server.HistoryController.SetData(Name, PosToInt(x, y, z), type, changer.UID);
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e.Message);
+                    Console.WriteLine(e.StackTrace);
+                }
+                return true;
+            }
+            return false;
+        }
 
-			return new BlockPos(x, y, z);
-		}
-		public int IntOffset(int pos, int x, int y, int z)
-		{
-			return pos + x + z * sizeX + y * sizeX * sizeZ;
-		}
+        internal bool PhysicsBlockChange(BlockPos pos, byte type)
+        {
+            if (BlockChange(pos.X, pos.Y, pos.Z, type))
+            {
+                try
+                {
+                    //Server.historyController.SetData(name, PosToInt(pos.x, pos.y, pos.z), type, 0);
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e.Message);
+                    Console.WriteLine(e.StackTrace);
+                }
+                return true;
+            }
+            return false;
+        }
 
-		internal static Level Find(string name)
-		{
-			foreach (Level l in LevelHandler.levels.ToArray())
-			{
-				if (l.name == name) return l;
-			}
-			return null;
-		}
-	}
-	public struct BlockPos
-	{
-		public ushort x, y, z;
-		public BlockPos(ushort _x, ushort _y, ushort _z)
-		{
-			x = _x;
-			y = _y;
-			z = _z;
-		}
-		public BlockPos(int _x, int _y, int _z)
-		{
-			x = (ushort)_x;
-			y = (ushort)_y;
-			z = (ushort)_z;
-		}
+        internal bool PhysicsBlockChange(BlockPos pos, Blocks type)
+        {
+            return PhysicsBlockChange(pos, (byte) type);
+        }
 
-		public BlockPos diff(int _x, int _y, int _z)
-		{
-			return new BlockPos((ushort)(x + _x), (ushort)(y + _y), (ushort)(z + _z));
-		}
-	}
+        internal byte GetTile(ushort x, ushort y, ushort z)
+        {
+            if (NotInBounds(x, y, z))
+            {
+                Server.Log("Out of bounds?", LogTypesEnum.Debug);
+                return 255;
+            }
+            return BlockData[PosToInt(x, y, z)];
+        }
+
+        internal Blocks GetTile(BlockPos pos)
+        {
+            return (Blocks) GetTile(pos.X, pos.Y, pos.Z);
+        }
+
+        internal Blocks GetTile(BlockPos pos, int diffX, int diffY, int diffZ)
+        {
+            var x = (ushort) (pos.X + diffX);
+            var y = (ushort) (pos.Y + diffY);
+            var z = (ushort) (pos.Z + diffZ);
+
+            return (Blocks) GetTile(x, y, z);
+        }
+
+        public bool NotInBounds(ushort x, ushort y, ushort z)
+        {
+            return (x >= SizeX || y >= SizeY || z >= SizeZ);
+        }
+
+        public bool NotInBounds(BlockPos pos)
+        {
+            return NotInBounds(pos.X, pos.Y, pos.Z);
+        }
+
+        public int PosToInt(ushort x, ushort y, ushort z)
+        {
+            if (x >= SizeX)
+            {
+                return -1;
+            }
+            if (y >= SizeY)
+            {
+                return -1;
+            }
+            if (z >= SizeZ)
+            {
+                return -1;
+            }
+            return x + z*SizeX + y*SizeX*SizeZ;
+        }
+
+        public int PosToInt(BlockPos pos)
+        {
+            return PosToInt(pos.X, pos.Y, pos.Z);
+        }
+
+        public BlockPos IntToPos(int pos)
+        {
+            var y = (ushort) (pos/SizeX/SizeZ);
+            pos -= y*SizeX*SizeZ;
+            var z = (ushort) (pos/SizeX);
+            pos -= z*SizeX;
+            var x = (ushort) pos;
+
+            return new BlockPos(x, y, z);
+        }
+
+        public int IntOffset(int pos, int x, int y, int z)
+        {
+            return pos + x + z*SizeX + y*SizeX*SizeZ;
+        }
+
+        internal static Level Find(string name)
+        {
+            return LevelHandler.Levels.ToArray().FirstOrDefault(l => l.Name == name);
+        }
+    }
+
+    public struct BlockPos
+    {
+        public ushort X;
+        public ushort Y;
+        public ushort Z;
+
+        public BlockPos(ushort x, ushort y, ushort z)
+        {
+            X = x;
+            Y = y;
+            Z = z;
+        }
+
+        public BlockPos(int x, int y, int z)
+        {
+            X = (ushort) x;
+            Y = (ushort) y;
+            Z = (ushort) z;
+        }
+
+        public BlockPos Diff(int x, int y, int z)
+        {
+            return new BlockPos((ushort) (X + x), (ushort) (Y + y), (ushort) (Z + z));
+        }
+    }
 }

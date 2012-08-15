@@ -1,528 +1,510 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Timers;
+using System.Threading;
 
 namespace MCFrog
 {
-	class PhysicsHandler
-	{
-		public delegate void Del(Level l, int pos);
-		public static Dictionary<byte, Del> PhysicsTypes = new Dictionary<byte, Del>();
+    internal class PhysicsHandler
+    {
+        #region Delegates
 
-		public List<int> PhysicsUpdates = new List<int>();
-		public Dictionary<int, byte> OtherData = new Dictionary<int, byte>();
+        public delegate void Del(Level l, int pos);
 
-		public int checksPerTick = 20;
-		public int interval = 10;
-		Level level;
-		
-		internal bool shouldStop = false;
-		bool stopped = false;
+        #endregion
 
-		internal bool isEnabled = false; //Disabled by default
-		
-		internal bool realistic = true;
-		internal bool finiteLiquids = true;
-		internal byte waterCurrent = 7;
-		internal byte lavaCurrent = 4;
+        public static Dictionary<byte, Del> PhysicsTypes = new Dictionary<byte, Del>();
+        private readonly Level _level;
 
-		internal PhysicsHandler(Level l, bool enabled)
-		{
-			level = l;
-			isEnabled = enabled;
+        public int ChecksPerTick = 20;
+        internal bool FiniteLiquids = true;
+        public int Interval = 10;
 
-			if (PhysicsTypes.Count == 0) return;
+        internal bool IsEnabled = false; //Disabled by default
+        internal byte LavaCurrent = 4;
+        public Dictionary<int, byte> OtherData = new Dictionary<int, byte>();
+        public List<int> PhysicsUpdates = new List<int>();
 
-			if (enabled)
-			{
-				Server.Log("Initializing Physics on " + l.name + ", physics is currently ENABLED", LogTypesEnum.info);
-			}
-			else
-			{
-				Server.Log("Initializing Physics on " + l.name + ", physics is currently DISABLED", LogTypesEnum.info);
-			}
+        internal bool Realistic = true;
+        internal bool ShouldStop = false;
+        internal byte WaterCurrent = 7;
 
-			new System.Threading.Thread(new System.Threading.ThreadStart(TickTimer)).Start();
-		}
+        internal PhysicsHandler(Level l, bool enabled)
+        {
+            _level = l;
+            IsEnabled = enabled;
 
-		internal void TickTimer()
-		{
-			while (!Server.shouldShutdown && !level.isUnloaded && !shouldStop)
-			{
-				Tick();
-				System.Threading.Thread.Sleep(interval);
-			}
-			stopped = true;
-		}
+            if (PhysicsTypes.Count == 0) return;
 
-		internal static void LoadPhysicsTypes()
-		{
-			Server.Log("Loading Physics blocks...", LogTypesEnum.system);
+            if (enabled)
+            {
+                Server.Log("Initializing Physics on " + l.Name + ", physics is currently ENABLED", LogTypesEnum.Info);
+            }
+            else
+            {
+                Server.Log("Initializing Physics on " + l.Name + ", physics is currently DISABLED", LogTypesEnum.Info);
+            }
 
-			PhysicsTypes.Add(2, Grass);
-			PhysicsTypes.Add(3, Dirt);
-			PhysicsTypes.Add(8, Water);
-			PhysicsTypes.Add(9, StillWater);
-			PhysicsTypes.Add(10, Lava);
-			PhysicsTypes.Add(11, StillLava);
-			PhysicsTypes.Add(12, Sand);
-			PhysicsTypes.Add(13, Gravel);
-			PhysicsTypes.Add(19, Sponge);
-			PhysicsTypes.Add(44, HalfStair);
-		}
+            new Thread(TickTimer).Start();
+        }
 
-		internal static void Test(int pos)
-		{
-			Server.Log("Physics Test", LogTypesEnum.debug);
-			System.Threading.Thread.Sleep(1000);
-		}
+        internal void TickTimer()
+        {
+            while (!Server.ShouldShutdown && !_level.IsUnloaded && !ShouldStop)
+            {
+                Tick();
+                Thread.Sleep(Interval);
+            }
+        }
 
-		void Tick()
-		{
-			//Server.Log("Physics TICK on " + level.name, LogTypesEnum.info);
-			
-			if (PhysicsUpdates.Count > 10000)
-			{
-				PhysicsUpdates.Clear();
-				Server.Log("Physics was overloaded on " + level.name + ", physics has been reset.", LogTypesEnum.error);
-				return;
-			}
+        internal static void LoadPhysicsTypes()
+        {
+            Server.Log("Loading Physics blocks...", LogTypesEnum.System);
 
-			for (int iterations = 0; iterations < checksPerTick; ++iterations)
-			{
-				if (PhysicsUpdates.Count == 0) return;
-				
-				int blockpos = PhysicsUpdates[0];
-				PhysicsUpdates.Remove(blockpos);
+            PhysicsTypes.Add(2, Grass);
+            PhysicsTypes.Add(3, Dirt);
+            PhysicsTypes.Add(8, Water);
+            PhysicsTypes.Add(9, StillWater);
+            PhysicsTypes.Add(10, Lava);
+            PhysicsTypes.Add(11, StillLava);
+            PhysicsTypes.Add(12, Sand);
+            PhysicsTypes.Add(13, Gravel);
+            PhysicsTypes.Add(19, Sponge);
+            PhysicsTypes.Add(44, HalfStair);
+        }
 
-				if(blockpos < 0 || blockpos >= level.blocks.Length) continue;
-				byte type = level.blocks[blockpos];
+        internal static void Test(int pos)
+        {
+            Server.Log("Physics Test", LogTypesEnum.Debug);
+            Thread.Sleep(1000);
+        }
 
-				if (PhysicsTypes.ContainsKey(type))
-				{
-					//Console.WriteLine("rawr");
-					PhysicsTypes[type].Invoke(level, blockpos);
-				}
-				else
-				{
-					iterations--;
-				}
-			}
-		}
+        private void Tick()
+        {
+            //Server.Log("Physics TICK on " + level.name, LogTypesEnum.info);
 
-		#region PhysicsMethods
-		static void Grass(Level level, int pos)
-		{
-			BlockPos blockPos = level.IntToPos(pos);
-			BlockPos aboveBlockPos = blockPos.diff(0, 1, 0);
+            if (PhysicsUpdates.Count > 10000)
+            {
+                PhysicsUpdates.Clear();
+                Server.Log("Physics was overloaded on " + _level.Name + ", physics has been reset.", LogTypesEnum.Error);
+                return;
+            }
 
-			int abovePos = level.PosToInt(aboveBlockPos);
-			byte type = level.blocks[abovePos];
+            for (int iterations = 0; iterations < ChecksPerTick; ++iterations)
+            {
+                if (PhysicsUpdates.Count == 0) return;
 
-			if (Block.lightPass.Contains(type)) return;
+                int blockpos = PhysicsUpdates[0];
+                PhysicsUpdates.Remove(blockpos);
 
-			level.PhysicsBlockChange(blockPos, Blocks.Dirt);
-		}
-		static void Dirt(Level level, int pos)
-		{
-			BlockPos blockPos = level.IntToPos(pos);
+                if (blockpos < 0 || blockpos >= _level.BlockData.Length) continue;
+                byte type = _level.BlockData[blockpos];
 
-			//This code works, but in order to change dirt into grass we have to check below every block in the same way, so we wont use it for now
-			//if (level.physics.realistic)
-			//{
-			//    for (int y = blockPos.y + 1; y < level.sizeY; ++y)
-			//    {
-			//        BlockPos currentBlockPos = new BlockPos(blockPos.x, (ushort)y, blockPos.z);
-			//        int currentPos = level.PosToInt(currentBlockPos);
+                if (PhysicsTypes.ContainsKey(type))
+                {
+                    //Console.WriteLine("rawr");
+                    PhysicsTypes[type].Invoke(_level, blockpos);
+                }
+                else
+                {
+                    iterations--;
+                }
+            }
+        }
 
-			//        byte type = level.blocks[currentPos];
+        #region PhysicsMethods
 
-			//        if (!Block.LightPass.Contains(type)) { return; }
-			//    }
-			//}
-			//else
-			{
-				BlockPos currentBlockPos = blockPos.diff(0, 1, 0);
-				int currentPos = level.PosToInt(currentBlockPos);
+        private static void Grass(Level level, int pos)
+        {
+            BlockPos blockPos = level.IntToPos(pos);
+            BlockPos aboveBlockPos = blockPos.Diff(0, 1, 0);
 
-				byte type = level.blocks[currentPos];
+            int abovePos = level.PosToInt(aboveBlockPos);
+            byte type = level.BlockData[abovePos];
 
-				if (!Block.lightPass.Contains(type)) return;
-			}
-			if (level.blocks[pos] != (byte)Blocks.Dirt) return;
-			level.PhysicsBlockChange(blockPos, Blocks.Grass);
-		}
-		static void Water(Level level, int pos)
-		{
-			BlockPos blockPos = level.IntToPos(pos);
-			BlockPos belowBlockPos = blockPos.diff(0, -1, 0);
+            if (Block.LightPass.Contains(type)) return;
 
-			int belowPos = level.PosToInt(belowBlockPos);
-			byte type = level.blocks[belowPos];
-			
-			if (type == (byte)Blocks.WaterStill)
-			{
-				level.physics.OtherData.Remove(belowPos);
-				level.physics.OtherData.Add(belowPos, level.physics.waterCurrent);
-			}
-			else if (Block.crushable.Contains(type))
-			{
-				level.physics.OtherData.Remove(belowPos);
-				level.physics.OtherData.Add(belowPos, level.physics.waterCurrent);
-				level.PhysicsBlockChange(belowBlockPos, Blocks.WaterStill);
-			}
-			else
-			{
-				for (int _X = -1; _X < 2; ++_X)
-					for (int _Z = -1; _Z < 2; ++_Z)
-					{
-						if (Math.Abs(_X) == 1 && Math.Abs(_Z) == 1) continue;
-						if (blockPos.x + _X < 0 || blockPos.z + _Z < 0) continue;
+            level.PhysicsBlockChange(blockPos, Blocks.Dirt);
+        }
 
-						BlockPos aroundPos = blockPos.diff(_X, 0, _Z);
-						
-						if (level.NotInBounds(aroundPos)) continue;
+        private static void Dirt(Level level, int pos)
+        {
+            BlockPos blockPos = level.IntToPos(pos);
 
-						int newPos = level.PosToInt(aroundPos);
-						
-						if (level.blocks[newPos] == (byte)Blocks.WaterStill)
-						{
-							level.physics.OtherData.Remove(newPos);
-							level.physics.OtherData.Add(newPos, level.physics.waterCurrent);
-						}
-						else if (Block.crushable.Contains(level.blocks[newPos]))
-						{
-							level.physics.OtherData.Remove(newPos);
-							level.physics.OtherData.Add(newPos, level.physics.waterCurrent);
-							level.PhysicsBlockChange(aroundPos, Blocks.WaterStill);
-							//if (level.physics.PhysicsUpdates.Contains(level.PosToInt(aroundBelowPos))) return;
-							//level.physics.PhysicsUpdates.Add(level.PosToInt(aroundBelowPos));
-							return;
-						}
-						else
-						{
-							continue;
-						}
-					}
-			}
-		}
-		static void StillWater(Level level, int pos)
-		{
-			BlockPos blockPos = level.IntToPos(pos);
-			BlockPos belowBlockPos = blockPos.diff(0, -1, 0);
+            //This code works, but in order to change dirt into grass we have to check below every block in the same way, so we wont use it for now
+            //if (level.physics.realistic)
+            //{
+            //    for (int y = blockPos.y + 1; y < level.sizeY; ++y)
+            //    {
+            //        BlockPos currentBlockPos = new BlockPos(blockPos.x, (ushort)y, blockPos.z);
+            //        int currentPos = level.PosToInt(currentBlockPos);
 
-			if (!level.physics.OtherData.ContainsKey(pos)) return;
+            //        byte type = level.blocks[currentPos];
 
-			byte current = (byte)(level.physics.OtherData[pos] - 1);
-			if (current == 0) return;
+            //        if (!Block.LightPass.Contains(type)) { return; }
+            //    }
+            //}
+            //else
+            {
+                BlockPos currentBlockPos = blockPos.Diff(0, 1, 0);
+                int currentPos = level.PosToInt(currentBlockPos);
 
-			int belowPos = level.PosToInt(belowBlockPos);
-			byte type = level.blocks[belowPos];
-			
-			if (type == (byte)Blocks.WaterStill)
-			{
-				if (level.physics.OtherData[belowPos] < current)
-				{
-					level.physics.OtherData.Remove(belowPos);
-					level.physics.OtherData.Add(belowPos, current);
-				}
-			}
-			else if (Block.crushable.Contains(type))
-			{
-				level.physics.OtherData.Remove(belowPos);
-				level.physics.OtherData.Add(belowPos, current);
-				level.PhysicsBlockChange(belowBlockPos, Blocks.WaterStill);
-			}
-			else
-			{
-				for (int _X = -1; _X < 2; ++_X)
-					for (int _Z = -1; _Z < 2; ++_Z)
-					{
-						if (Math.Abs(_X) == 1 && Math.Abs(_Z) == 1) continue;
-						if (blockPos.x + _X < 0 || blockPos.z + _Z < 0) continue;
+                byte type = level.BlockData[currentPos];
 
-						BlockPos aroundPos = blockPos.diff(_X, 0, _Z);
+                if (!Block.LightPass.Contains(type)) return;
+            }
+            if (level.BlockData[pos] != (byte) Blocks.Dirt) return;
+            level.PhysicsBlockChange(blockPos, Blocks.Grass);
+        }
 
-						if (level.NotInBounds(aroundPos)) continue;
+        private static void Water(Level level, int pos)
+        {
+            BlockPos blockPos = level.IntToPos(pos);
+            BlockPos belowBlockPos = blockPos.Diff(0, -1, 0);
 
-						int newPos = level.PosToInt(aroundPos);
-						byte newType = level.blocks[newPos];
-						
-						if (newType == (byte)Blocks.WaterStill)
-						{
-							if (level.physics.OtherData[newPos] >= current) continue;
-							level.physics.OtherData.Remove(newPos);
-							level.physics.OtherData.Add(newPos, current);
-						}
-						else if (Block.crushable.Contains(newType))
-						{
-							level.physics.OtherData.Remove(newPos);
-							level.physics.OtherData.Add(newPos, current);
-							level.PhysicsBlockChange(aroundPos, Blocks.WaterStill);
-							//if (level.physics.PhysicsUpdates.Contains(level.PosToInt(aroundBelowPos))) return;
-							//level.physics.PhysicsUpdates.Add(level.PosToInt(aroundBelowPos));
-							return;
-						}
-						else
-						{
-							continue;
-						}
-					}
-			}
-		}
-		static void Lava(Level level, int pos)
-		{
-			BlockPos blockPos = level.IntToPos(pos);
-			BlockPos belowBlockPos = blockPos.diff(0, -1, 0);
+            int belowPos = level.PosToInt(belowBlockPos);
+            byte type = level.BlockData[belowPos];
 
-			int belowPos = level.PosToInt(belowBlockPos);
-			byte type = level.blocks[belowPos];
-			
-			if (type == (byte)Blocks.LavaStill)
-			{
-				level.physics.OtherData.Remove(belowPos);
-				level.physics.OtherData.Add(belowPos, level.physics.lavaCurrent);
-			}
-			else if (Block.crushable.Contains(type))
-			{
-				level.physics.OtherData.Remove(belowPos);
-				level.physics.OtherData.Add(belowPos, level.physics.lavaCurrent);
-				level.PhysicsBlockChange(belowBlockPos, Blocks.LavaStill);
-			}
-			else
-			{
-				for (int _X = -1; _X < 2; ++_X)
-					for (int _Z = -1; _Z < 2; ++_Z)
-					{
-						if (Math.Abs(_X) == 1 && Math.Abs(_Z) == 1) continue;
-						if (blockPos.x + _X < 0 || blockPos.z + _Z < 0) continue;
+            if (type == (byte) Blocks.WaterStill)
+            {
+                level.Physics.OtherData.Remove(belowPos);
+                level.Physics.OtherData.Add(belowPos, level.Physics.WaterCurrent);
+            }
+            else if (Block.Crushable.Contains(type))
+            {
+                level.Physics.OtherData.Remove(belowPos);
+                level.Physics.OtherData.Add(belowPos, level.Physics.WaterCurrent);
+                level.PhysicsBlockChange(belowBlockPos, Blocks.WaterStill);
+            }
+            else
+            {
+                for (int x = -1; x < 2; ++x)
+                    for (int z = -1; z < 2; ++z)
+                    {
+                        if (Math.Abs(x) == 1 && Math.Abs(z) == 1) continue;
+                        if (blockPos.X + x < 0 || blockPos.Z + z < 0) continue;
 
-						BlockPos aroundPos = blockPos.diff(_X, 0, _Z);
+                        BlockPos aroundPos = blockPos.Diff(x, 0, z);
 
-						if (level.NotInBounds(aroundPos)) continue;
+                        if (level.NotInBounds(aroundPos)) continue;
 
-						int newPos = level.PosToInt(aroundPos);
-						
-						if (level.blocks[newPos] == (byte)Blocks.LavaStill)
-						{
-							level.physics.OtherData.Remove(newPos);
-							level.physics.OtherData.Add(newPos, level.physics.lavaCurrent);
-						}
-						else if (Block.crushable.Contains(level.blocks[newPos]))
-						{
-							level.physics.OtherData.Remove(newPos);
-							level.physics.OtherData.Add(newPos, level.physics.lavaCurrent);
-							level.PhysicsBlockChange(aroundPos, Blocks.LavaStill);
-							//if (level.physics.PhysicsUpdates.Contains(level.PosToInt(aroundBelowPos))) return;
-							//level.physics.PhysicsUpdates.Add(level.PosToInt(aroundBelowPos));
-							return;
-						}
-						else
-						{
-							continue;
-						}
-					}
-			}
-		}
-		static void StillLava(Level level, int pos)
-		{
-			BlockPos blockPos = level.IntToPos(pos);
-			BlockPos belowBlockPos = blockPos.diff(0, -1, 0);
+                        int newPos = level.PosToInt(aroundPos);
 
-			if (!level.physics.OtherData.ContainsKey(pos)) return;
+                        if (level.BlockData[newPos] == (byte) Blocks.WaterStill)
+                        {
+                            level.Physics.OtherData.Remove(newPos);
+                            level.Physics.OtherData.Add(newPos, level.Physics.WaterCurrent);
+                        }
+                        else if (Block.Crushable.Contains(level.BlockData[newPos]))
+                        {
+                            level.Physics.OtherData.Remove(newPos);
+                            level.Physics.OtherData.Add(newPos, level.Physics.WaterCurrent);
+                            level.PhysicsBlockChange(aroundPos, Blocks.WaterStill);
+                            //if (level.physics.PhysicsUpdates.Contains(level.PosToInt(aroundBelowPos))) return;
+                            //level.physics.PhysicsUpdates.Add(level.PosToInt(aroundBelowPos));
+                            return;
+                        }
+                    }
+            }
+        }
 
-			byte current = (byte)(level.physics.OtherData[pos] - 1);
-			if (current == 0) return;
+        private static void StillWater(Level level, int pos)
+        {
+            BlockPos blockPos = level.IntToPos(pos);
+            BlockPos belowBlockPos = blockPos.Diff(0, -1, 0);
 
-			int belowPos = level.PosToInt(belowBlockPos);
-			byte type = level.blocks[belowPos];
+            if (!level.Physics.OtherData.ContainsKey(pos)) return;
 
-			if (type == (byte)Blocks.LavaStill)
-			{
-				if (level.physics.OtherData[belowPos] < current)
-				{
-					level.physics.OtherData.Remove(belowPos);
-					level.physics.OtherData.Add(belowPos, current);
-				}
-			}
-			else if (Block.crushable.Contains(type))
-			{
-				level.physics.OtherData.Remove(belowPos);
-				level.physics.OtherData.Add(belowPos, current);
-				level.PhysicsBlockChange(belowBlockPos, Blocks.LavaStill);
-			}
-			else
-			{
-				for (int _X = -1; _X < 2; ++_X)
-					for (int _Z = -1; _Z < 2; ++_Z)
-					{
-						if (Math.Abs(_X) == 1 && Math.Abs(_Z) == 1) continue;
-						if (blockPos.x + _X < 0 || blockPos.z + _Z < 0) continue;
+            var current = (byte) (level.Physics.OtherData[pos] - 1);
+            if (current == 0) return;
 
-						BlockPos aroundPos = blockPos.diff(_X, 0, _Z);
+            int belowPos = level.PosToInt(belowBlockPos);
+            byte type = level.BlockData[belowPos];
 
-						if (level.NotInBounds(aroundPos)) continue;
+            if (type == (byte) Blocks.WaterStill)
+            {
+                if (level.Physics.OtherData[belowPos] < current)
+                {
+                    level.Physics.OtherData.Remove(belowPos);
+                    level.Physics.OtherData.Add(belowPos, current);
+                }
+            }
+            else if (Block.Crushable.Contains(type))
+            {
+                level.Physics.OtherData.Remove(belowPos);
+                level.Physics.OtherData.Add(belowPos, current);
+                level.PhysicsBlockChange(belowBlockPos, Blocks.WaterStill);
+            }
+            else
+            {
+                for (int x = -1; x < 2; ++x)
+                    for (int z = -1; z < 2; ++z)
+                    {
+                        if (Math.Abs(x) == 1 && Math.Abs(z) == 1) continue;
+                        if (blockPos.X + x < 0 || blockPos.Z + z < 0) continue;
 
-						int newPos = level.PosToInt(aroundPos);
-						byte newType = level.blocks[newPos];
+                        BlockPos aroundPos = blockPos.Diff(x, 0, z);
 
-						if (newType == (byte)Blocks.LavaStill)
-						{
-							if (level.physics.OtherData[newPos] >= current) continue;
-							level.physics.OtherData.Remove(newPos);
-							level.physics.OtherData.Add(newPos, current);
-						}
-						else if (Block.crushable.Contains(newType))
-						{
-							level.physics.OtherData.Remove(newPos);
-							level.physics.OtherData.Add(newPos, current);
-							level.PhysicsBlockChange(aroundPos, Blocks.LavaStill);
-							//if (level.physics.PhysicsUpdates.Contains(level.PosToInt(aroundBelowPos))) return;
-							//level.physics.PhysicsUpdates.Add(level.PosToInt(aroundBelowPos));
-							return;
-						}
-						else
-						{
-							continue;
-						}
-					}
-			}
-		}
-		static void Sand(Level level, int pos)
-		{
-			BlockPos blockPos = level.IntToPos(pos);
-			BlockPos belowBlockPos = blockPos.diff(0, -1, 0);
-			
-			Blocks below = level.GetTile(belowBlockPos);
+                        if (level.NotInBounds(aroundPos)) continue;
 
-			if (below == Blocks.Zero)
-			{
-				return;
-			}
-			else if (Block.crushable.Contains((byte)below))
-			{
-				level.PhysicsBlockChange(belowBlockPos, Blocks.Sand);
-				level.PhysicsBlockChange(blockPos, Blocks.Air);
-				//if(level.physics.PhysicsUpdates.Contains(level.PosToInt(belowPos))) return;
-				//level.physics.PhysicsUpdates.Add(level.PosToInt(belowPos));
-			}
-			else if (level.physics.realistic)
-			{
-				for(int _X = -1;_X<2;++_X)
-					for (int _Z = -1; _Z < 2; ++_Z)
-					{
-						if (Math.Abs(_X) == 1 && Math.Abs(_Z) == 1) continue;
-						if (belowBlockPos.x + _X < 0 || belowBlockPos.z + _Z < 0) continue;
-						BlockPos aroundPos = blockPos.diff(_X, 0, _Z);
-						BlockPos aroundBelowPos = belowBlockPos.diff(_X, 0, _Z);
-						if (level.NotInBounds(aroundBelowPos)) continue;
+                        int newPos = level.PosToInt(aroundPos);
+                        byte newType = level.BlockData[newPos];
 
-						int testPos = level.PosToInt(aroundPos);
-						int newPos = level.PosToInt(aroundBelowPos);
-						if (Block.crushable.Contains(level.blocks[newPos]) && level.blocks[testPos] == 0)
-						{
-							level.PhysicsBlockChange(aroundBelowPos, Blocks.Sand);
-							level.PhysicsBlockChange(blockPos, Blocks.Air);
-							//if (level.physics.PhysicsUpdates.Contains(level.PosToInt(aroundBelowPos))) return;
-							//level.physics.PhysicsUpdates.Add(level.PosToInt(aroundBelowPos));
-							return;
-						}
-						else
-						{
-							continue;
-						}
-					}
-			}
-		}
-		static void Gravel(Level level, int pos)
-		{
-			BlockPos blockPos = level.IntToPos(pos);
-			BlockPos belowPos = blockPos.diff(0, -1, 0);
+                        if (newType == (byte) Blocks.WaterStill)
+                        {
+                            if (level.Physics.OtherData[newPos] >= current) continue;
+                            level.Physics.OtherData.Remove(newPos);
+                            level.Physics.OtherData.Add(newPos, current);
+                        }
+                        else if (Block.Crushable.Contains(newType))
+                        {
+                            level.Physics.OtherData.Remove(newPos);
+                            level.Physics.OtherData.Add(newPos, current);
+                            level.PhysicsBlockChange(aroundPos, Blocks.WaterStill);
+                            //if (level.physics.PhysicsUpdates.Contains(level.PosToInt(aroundBelowPos))) return;
+                            //level.physics.PhysicsUpdates.Add(level.PosToInt(aroundBelowPos));
+                            return;
+                        }
+                    }
+            }
+        }
 
-			Blocks below = level.GetTile(belowPos);
+        private static void Lava(Level level, int pos)
+        {
+            BlockPos blockPos = level.IntToPos(pos);
+            BlockPos belowBlockPos = blockPos.Diff(0, -1, 0);
 
-			if (below == Blocks.Zero)
-			{
-				return;
-			}
-			else if (Block.crushable.Contains((byte)below))
-			{
-				level.PhysicsBlockChange(belowPos, Blocks.Gravel);
-				level.PhysicsBlockChange(blockPos, Blocks.Air);
-				//if(level.physics.PhysicsUpdates.Contains(level.PosToInt(belowPos))) return;
-				//level.physics.PhysicsUpdates.Add(level.PosToInt(belowPos));
-			}
-			else if (level.physics.realistic)
-			{
-				for (int _X = -1; _X < 2; ++_X)
-					for (int _Z = -1; _Z < 2; ++_Z)
-					{
-						if (Math.Abs(_X) == 1 && Math.Abs(_Z) == 1) continue;
-						if (belowPos.x + _X < 0 || belowPos.z + _Z < 0) continue;
-						BlockPos aroundPos = blockPos.diff(_X, 0, _Z);
-						BlockPos aroundBelowPos = belowPos.diff(_X, 0, _Z);
-						if (level.NotInBounds(aroundBelowPos)) continue;
+            int belowPos = level.PosToInt(belowBlockPos);
+            byte type = level.BlockData[belowPos];
 
-						int testPos = level.PosToInt(aroundPos);
-						int newPos = level.PosToInt(aroundBelowPos);
-						if (Block.crushable.Contains(level.blocks[newPos]) && level.blocks[testPos] == 0)
-						{
-							level.PhysicsBlockChange(aroundBelowPos, Blocks.Gravel);
-							level.PhysicsBlockChange(blockPos, Blocks.Air);
-							//if (level.physics.PhysicsUpdates.Contains(level.PosToInt(aroundBelowPos))) return;
-							//level.physics.PhysicsUpdates.Add(level.PosToInt(aroundBelowPos));
-							return;
-						}
-						else
-						{
-							continue;
-						}
-					}
-			}
+            if (type == (byte) Blocks.LavaStill)
+            {
+                level.Physics.OtherData.Remove(belowPos);
+                level.Physics.OtherData.Add(belowPos, level.Physics.LavaCurrent);
+            }
+            else if (Block.Crushable.Contains(type))
+            {
+                level.Physics.OtherData.Remove(belowPos);
+                level.Physics.OtherData.Add(belowPos, level.Physics.LavaCurrent);
+                level.PhysicsBlockChange(belowBlockPos, Blocks.LavaStill);
+            }
+            else
+            {
+                for (int x = -1; x < 2; ++x)
+                    for (int z = -1; z < 2; ++z)
+                    {
+                        if (Math.Abs(x) == 1 && Math.Abs(z) == 1) continue;
+                        if (blockPos.X + x < 0 || blockPos.Z + z < 0) continue;
 
-		}
-		static void Sponge(Level level, int pos)
-		{
-			BlockPos blockPos = level.IntToPos(pos);
+                        BlockPos aroundPos = blockPos.Diff(x, 0, z);
 
-			for (int _x = -1; _x < 2; ++_x)
-			{
-				for (int _y = -1; _y < 2; ++_y)
-				{
-					for (int _z = -1; _z < 2; ++_z)
-					{
-						BlockPos currentBlockPos = blockPos.diff(_x, _y, _z);
-						int currentPos = level.PosToInt(currentBlockPos);
+                        if (level.NotInBounds(aroundPos)) continue;
 
-						if (level.NotInBounds(currentBlockPos)) continue;
+                        int newPos = level.PosToInt(aroundPos);
 
-						Blocks type = (Blocks)level.blocks[currentPos];
+                        if (level.BlockData[newPos] == (byte) Blocks.LavaStill)
+                        {
+                            level.Physics.OtherData.Remove(newPos);
+                            level.Physics.OtherData.Add(newPos, level.Physics.LavaCurrent);
+                        }
+                        else if (Block.Crushable.Contains(level.BlockData[newPos]))
+                        {
+                            level.Physics.OtherData.Remove(newPos);
+                            level.Physics.OtherData.Add(newPos, level.Physics.LavaCurrent);
+                            level.PhysicsBlockChange(aroundPos, Blocks.LavaStill);
+                            //if (level.physics.PhysicsUpdates.Contains(level.PosToInt(aroundBelowPos))) return;
+                            //level.physics.PhysicsUpdates.Add(level.PosToInt(aroundBelowPos));
+                            return;
+                        }
+                    }
+            }
+        }
 
-						if (type == Blocks.Water || type == Blocks.WaterStill || type == Blocks.Lava || type == Blocks.LavaStill)
-						{
-							level.PhysicsBlockChange(currentBlockPos, Blocks.Air);
-						}
-					}
-				}
-			}
-		}
-		static void HalfStair(Level level, int pos)
-		{
-			BlockPos blockPos = level.IntToPos(pos);
+        private static void StillLava(Level level, int pos)
+        {
+            BlockPos blockPos = level.IntToPos(pos);
+            BlockPos belowBlockPos = blockPos.Diff(0, -1, 0);
 
-			BlockPos belowBlockPos = blockPos.diff(0, -1, 0);
-			int belowPos = level.PosToInt(belowBlockPos);
+            if (!level.Physics.OtherData.ContainsKey(pos)) return;
 
-			if (level.blocks[belowPos] == (byte)Blocks.Staircasestep)
-			{
-				level.PhysicsBlockChange(belowBlockPos, Blocks.Staircasefull);
-				level.PhysicsBlockChange(blockPos, Blocks.Air);
-			}
-		}
+            var current = (byte) (level.Physics.OtherData[pos] - 1);
+            if (current == 0) return;
 
+            int belowPos = level.PosToInt(belowBlockPos);
+            byte type = level.BlockData[belowPos];
 
-		#endregion
-	}
+            if (type == (byte) Blocks.LavaStill)
+            {
+                if (level.Physics.OtherData[belowPos] < current)
+                {
+                    level.Physics.OtherData.Remove(belowPos);
+                    level.Physics.OtherData.Add(belowPos, current);
+                }
+            }
+            else if (Block.Crushable.Contains(type))
+            {
+                level.Physics.OtherData.Remove(belowPos);
+                level.Physics.OtherData.Add(belowPos, current);
+                level.PhysicsBlockChange(belowBlockPos, Blocks.LavaStill);
+            }
+            else
+            {
+                for (int x = -1; x < 2; ++x)
+                    for (int z = -1; z < 2; ++z)
+                    {
+                        if (Math.Abs(x) == 1 && Math.Abs(z) == 1) continue;
+                        if (blockPos.X + x < 0 || blockPos.Z + z < 0) continue;
+
+                        BlockPos aroundPos = blockPos.Diff(x, 0, z);
+
+                        if (level.NotInBounds(aroundPos)) continue;
+
+                        int newPos = level.PosToInt(aroundPos);
+                        byte newType = level.BlockData[newPos];
+
+                        if (newType == (byte) Blocks.LavaStill)
+                        {
+                            if (level.Physics.OtherData[newPos] >= current) continue;
+                            level.Physics.OtherData.Remove(newPos);
+                            level.Physics.OtherData.Add(newPos, current);
+                        }
+                        else if (Block.Crushable.Contains(newType))
+                        {
+                            level.Physics.OtherData.Remove(newPos);
+                            level.Physics.OtherData.Add(newPos, current);
+                            level.PhysicsBlockChange(aroundPos, Blocks.LavaStill);
+                            //if (level.physics.PhysicsUpdates.Contains(level.PosToInt(aroundBelowPos))) return;
+                            //level.physics.PhysicsUpdates.Add(level.PosToInt(aroundBelowPos));
+                            return;
+                        }
+                    }
+            }
+        }
+
+        private static void Sand(Level level, int pos)
+        {
+            BlockPos blockPos = level.IntToPos(pos);
+            BlockPos belowBlockPos = blockPos.Diff(0, -1, 0);
+
+            Blocks below = level.GetTile(belowBlockPos);
+
+            if (below == Blocks.Zero)
+            {
+            }
+            else if (Block.Crushable.Contains((byte) below))
+            {
+                level.PhysicsBlockChange(belowBlockPos, Blocks.Sand);
+                level.PhysicsBlockChange(blockPos, Blocks.Air);
+                //if(level.physics.PhysicsUpdates.Contains(level.PosToInt(belowPos))) return;
+                //level.physics.PhysicsUpdates.Add(level.PosToInt(belowPos));
+            }
+            else if (level.Physics.Realistic)
+            {
+                for (int x = -1; x < 2; ++x)
+                    for (int z = -1; z < 2; ++z)
+                    {
+                        if (Math.Abs(x) == 1 && Math.Abs(z) == 1) continue;
+                        if (belowBlockPos.X + x < 0 || belowBlockPos.Z + z < 0) continue;
+                        BlockPos aroundPos = blockPos.Diff(x, 0, z);
+                        BlockPos aroundBelowPos = belowBlockPos.Diff(x, 0, z);
+                        if (level.NotInBounds(aroundBelowPos)) continue;
+
+                        int testPos = level.PosToInt(aroundPos);
+                        int newPos = level.PosToInt(aroundBelowPos);
+                        if (Block.Crushable.Contains(level.BlockData[newPos]) && level.BlockData[testPos] == 0)
+                        {
+                            level.PhysicsBlockChange(aroundBelowPos, Blocks.Sand);
+                            level.PhysicsBlockChange(blockPos, Blocks.Air);
+                            //if (level.physics.PhysicsUpdates.Contains(level.PosToInt(aroundBelowPos))) return;
+                            //level.physics.PhysicsUpdates.Add(level.PosToInt(aroundBelowPos));
+                            return;
+                        }
+                    }
+            }
+        }
+
+        private static void Gravel(Level level, int pos)
+        {
+            BlockPos blockPos = level.IntToPos(pos);
+            BlockPos belowPos = blockPos.Diff(0, -1, 0);
+
+            Blocks below = level.GetTile(belowPos);
+
+            if (below == Blocks.Zero)
+            {
+            }
+            else if (Block.Crushable.Contains((byte) below))
+            {
+                level.PhysicsBlockChange(belowPos, Blocks.Gravel);
+                level.PhysicsBlockChange(blockPos, Blocks.Air);
+                //if(level.physics.PhysicsUpdates.Contains(level.PosToInt(belowPos))) return;
+                //level.physics.PhysicsUpdates.Add(level.PosToInt(belowPos));
+            }
+            else if (level.Physics.Realistic)
+            {
+                for (int x = -1; x < 2; ++x)
+                    for (int z = -1; z < 2; ++z)
+                    {
+                        if (Math.Abs(x) == 1 && Math.Abs(z) == 1) continue;
+                        if (belowPos.X + x < 0 || belowPos.Z + z < 0) continue;
+                        BlockPos aroundPos = blockPos.Diff(x, 0, z);
+                        BlockPos aroundBelowPos = belowPos.Diff(x, 0, z);
+                        if (level.NotInBounds(aroundBelowPos)) continue;
+
+                        int testPos = level.PosToInt(aroundPos);
+                        int newPos = level.PosToInt(aroundBelowPos);
+                        if (Block.Crushable.Contains(level.BlockData[newPos]) && level.BlockData[testPos] == 0)
+                        {
+                            level.PhysicsBlockChange(aroundBelowPos, Blocks.Gravel);
+                            level.PhysicsBlockChange(blockPos, Blocks.Air);
+                            //if (level.physics.PhysicsUpdates.Contains(level.PosToInt(aroundBelowPos))) return;
+                            //level.physics.PhysicsUpdates.Add(level.PosToInt(aroundBelowPos));
+                            return;
+                        }
+                    }
+            }
+        }
+
+        private static void Sponge(Level level, int pos)
+        {
+            BlockPos blockPos = level.IntToPos(pos);
+
+            for (int x = -1; x < 2; ++x)
+            {
+                for (int y = -1; y < 2; ++y)
+                {
+                    for (int z = -1; z < 2; ++z)
+                    {
+                        BlockPos currentBlockPos = blockPos.Diff(x, y, z);
+                        int currentPos = level.PosToInt(currentBlockPos);
+
+                        if (level.NotInBounds(currentBlockPos)) continue;
+
+                        var type = (Blocks) level.BlockData[currentPos];
+
+                        if (type == Blocks.Water || type == Blocks.WaterStill || type == Blocks.Lava ||
+                            type == Blocks.LavaStill)
+                        {
+                            level.PhysicsBlockChange(currentBlockPos, Blocks.Air);
+                        }
+                    }
+                }
+            }
+        }
+
+        private static void HalfStair(Level level, int pos)
+        {
+            BlockPos blockPos = level.IntToPos(pos);
+
+            BlockPos belowBlockPos = blockPos.Diff(0, -1, 0);
+            int belowPos = level.PosToInt(belowBlockPos);
+
+            if (level.BlockData[belowPos] == (byte) Blocks.Staircasestep)
+            {
+                level.PhysicsBlockChange(belowBlockPos, Blocks.Staircasefull);
+                level.PhysicsBlockChange(blockPos, Blocks.Air);
+            }
+        }
+
+        #endregion
+    }
 }

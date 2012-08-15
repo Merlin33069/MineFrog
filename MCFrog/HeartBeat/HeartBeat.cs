@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using System.Net;
 using System.IO;
@@ -9,28 +7,28 @@ namespace MCFrog.HeartBeat
 {
 	public class HeartBeat : MarshalByRefObject
 	{
-		static string hash;
-		public static string serverURL;
-		static string staticVars;
+		static string _hash;
+		public static string ServerURL;
+		static string _staticVars;
 
 		//static BackgroundWorker worker;
-		static HttpWebRequest request;
-		static System.Timers.Timer heartbeatTimer = new System.Timers.Timer(60000);
+		static HttpWebRequest _request;
+		static readonly System.Timers.Timer HeartbeatTimer = new System.Timers.Timer(60000);
 
-		static bool isWorkaroundEnabled = false;
-		
-		public HeartBeat()
+	    private bool IsWorkaroundEnabled = false;
+
+	    public HeartBeat()
 		{
 			Console.WriteLine("Heartbeat Initializing...");
-			heartbeatTimer.Elapsed += delegate
+			HeartbeatTimer.Elapsed += delegate
 			{
-				heartbeatTimer.Interval = 15000;
-				pumpboth();
-			}; heartbeatTimer.Start();
+				HeartbeatTimer.Interval = 15000;
+				Pumpboth();
+			}; HeartbeatTimer.Start();
 
-			pumpboth();
+			Pumpboth();
 
-			if (isWorkaroundEnabled)
+			if (IsWorkaroundEnabled)
 			{
 				new PortWorkAround();
 			}
@@ -38,45 +36,43 @@ namespace MCFrog.HeartBeat
 
 		void Stop()
 		{
-			heartbeatTimer.Stop();
-			heartbeatTimer.Dispose();
+			HeartbeatTimer.Stop();
+			HeartbeatTimer.Dispose();
 		}
 
-		void pumpboth()
+		void Pumpboth()
 		{
-			staticVars = "port=" + Configuration.PORT +
+			_staticVars = "port=" + Configuration.PORT +
 				"&max=" + Configuration.MAXPLAYERS +
-				"&name=" + UrlEncode(Configuration.SERVER_NAME) +
+				"&name=" + UrlEncode(Configuration.ServerName) +
 				"&public=" + Configuration.PUBLIC +
 				"&version=" + Configuration.VERSION;
 
 			Beat();
-
-			return;
 		}
 
-		void Beat()
+	    static void Beat()
 		{
 			//Console.WriteLine("Beating!");
 			
-			string postVars = staticVars;
+			string postVars = _staticVars;
 
-			string url = "http://www.minecraft.net/heartbeat.jsp";
+			const string url = "http://www.minecraft.net/heartbeat.jsp";
 
-			postVars += "&salt=" + Configuration.SERVER_SALT;
+			postVars += "&salt=" + Configuration.ServerSalt;
 			postVars += "&users=" + 0; //TODO get player count
 
-			request = (HttpWebRequest)WebRequest.Create(new Uri(url));
-			request.Method = "POST";
-			request.ContentType = "application/x-www-form-urlencoded";
-			request.CachePolicy = new System.Net.Cache.RequestCachePolicy(System.Net.Cache.RequestCacheLevel.NoCacheNoStore);
+			_request = (HttpWebRequest)WebRequest.Create(new Uri(url));
+			_request.Method = "POST";
+			_request.ContentType = "application/x-www-form-urlencoded";
+			_request.CachePolicy = new System.Net.Cache.RequestCachePolicy(System.Net.Cache.RequestCacheLevel.NoCacheNoStore);
 			byte[] formData = Encoding.ASCII.GetBytes(postVars);
-			request.ContentLength = formData.Length;
-			request.Timeout = 15000;
+			_request.ContentLength = formData.Length;
+			_request.Timeout = 15000;
 
 			try
 			{
-				using (Stream requestStream = request.GetRequestStream())
+				using (Stream requestStream = _request.GetRequestStream())
 				{
 					requestStream.Write(formData, 0, formData.Length);
 					requestStream.Close();
@@ -88,30 +84,30 @@ namespace MCFrog.HeartBeat
 			}
 			try
 			{
-				using (WebResponse response = request.GetResponse())
+				using (WebResponse response = _request.GetResponse())
 				{
 					using (StreamReader responseReader = new StreamReader(response.GetResponseStream()))
 					{
-						if (hash != null)
+						if (_hash != null)
 						{
-							string oldhash = hash;
+							string oldhash = _hash;
 
 							string line = responseReader.ReadToEnd().Trim();
-							hash = line.Substring(line.LastIndexOf('=') + 1);
-							serverURL = line;
+							_hash = line.Substring(line.LastIndexOf('=') + 1);
+							ServerURL = line;
 
-							if (oldhash != hash)
+							if (oldhash != _hash)
 							{
-								Console.WriteLine("URL found: " + serverURL);
+								Console.WriteLine("URL found: " + ServerURL);
 							}
 						}
 						else
 						{
 							string line = responseReader.ReadToEnd().Trim();
-							hash = line.Substring(line.LastIndexOf('=') + 1);
-							serverURL = line;
+							_hash = line.Substring(line.LastIndexOf('=') + 1);
+							ServerURL = line;
 
-							Console.WriteLine("URL found: " + serverURL);
+							Console.WriteLine("URL found: " + ServerURL);
 						}
 					}
 				}
@@ -124,7 +120,7 @@ namespace MCFrog.HeartBeat
 
 		string UrlEncode(string input)
 		{
-			StringBuilder output = new StringBuilder();
+			var output = new StringBuilder();
 			for (int i = 0; i < input.Length; i++)
 			{
 				if ((input[i] >= '0' && input[i] <= '9') ||
@@ -134,14 +130,15 @@ namespace MCFrog.HeartBeat
 				{
 					output.Append(input[i]);
 				}
-				else if (Array.IndexOf<char>(reservedChars, input[i]) != -1)
+				else if (Array.IndexOf(_reservedChars, input[i]) != -1)
 				{
 					output.Append('%').Append(((int)input[i]).ToString("X"));
 				}
 			}
 			return output.ToString();
 		}
-		char[] reservedChars = { ' ', '!', '*', '\'', '(', ')', ';', ':', '@', '&',
+
+	    readonly char[] _reservedChars = { ' ', '!', '*', '\'', '(', ')', ';', ':', '@', '&',
                                                  '=', '+', '$', ',', '/', '?', '%', '#', '[', ']' };
 
 		public override object InitializeLifetimeService()

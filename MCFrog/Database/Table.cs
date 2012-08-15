@@ -1,24 +1,21 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.IO;
 
 namespace MCFrog.Database
 {
 	class Table
 	{
-		DataTypes[] dataTypes; //The types of data that are in each row
+	    DataTypes[] _dataTypes; //The types of data that are in each row
 
-		int rowSize; //Number of bytes in each row
-		long rowCount; //Number of rows currently in the table
-		string path; //The path to this table file
+		int _rowSize; //Number of bytes in each row
+		long _rowCount; //Number of rows currently in the table
+		string _path; //The path to this table file
 
-		internal Table(string _path, DataTypes[] types, int size)
+		internal Table(string path, DataTypes[] types, int size)
 		{
-			path = _path;
-			dataTypes = types;
-			rowSize = size;
+			_path = path;
+			_dataTypes = types;
+			_rowSize = size;
 
 			if (!File.Exists(path))
 				File.Create(path);
@@ -28,34 +25,31 @@ namespace MCFrog.Database
 
 		void GetRowCount()
 		{
-			FileInfo FI = new FileInfo(path);
-			long size = FI.Length;
+			FileInfo fi = new FileInfo(_path);
+			long size = fi.Length;
 
-			if ((size % rowSize) != 0)
+			if ((size % _rowSize) != 0)
 			{
 				Console.WriteLine("OH MA GERDZ THE SIZE IS WRONG, FILE IZ CORRUPTEDZ!");
 				throw new IOException("ERROR, TABLE file is CORRUPT!");
 			}
-			else
-			{
-				rowCount = size / rowSize;
-			}
+		    _rowCount = size / _rowSize;
 
-			Console.WriteLine("Number of rows: " + rowCount);
+		    Console.WriteLine("Number of rows: " + _rowCount);
 
-			NewRow(new object[2] { 5, "test" });
+			NewRow(new object[] { 5, "test" });
 		}
 
 		long NewRow(object[] data)
 		{
-			long id = rowCount;
-			++rowCount;
+			long id = _rowCount;
+			++_rowCount;
 
-			if (data.Length != dataTypes.Length) throw new InvalidDataException("Invalid Column Count!");
+			if (data.Length != _dataTypes.Length) throw new InvalidDataException("Invalid Column Count!");
 
-			byte[] bytes = Database.GetBytes(rowSize, dataTypes, data);
+			byte[] bytes = Database.GetBytes(_rowSize, _dataTypes, data);
 
-			FileStream fs = new FileStream(path, FileMode.Append);
+			FileStream fs = new FileStream(_path, FileMode.Append);
 			fs.Write(bytes, 0, bytes.Length);
 			fs.Close();
 

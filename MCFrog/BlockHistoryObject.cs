@@ -1,155 +1,158 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Collections;
 
 namespace MCFrog
 {
-	class TestClass
-	{
-		internal TestClass()
-		{
-			Console.WriteLine("loop starting!");
-			BlockHistoryObjectCollection bho = new BlockHistoryObjectCollection(100);
-			for (int i = 0; i < 120; i++)
-			{
-				bho.Add(new BlockHistoryObject("BHO: " + i));
-			}
-			foreach(BlockHistoryObject bho1 in bho)
-			{
-				Console.WriteLine("loopy");
-				Console.WriteLine(bho1.Name);
-			}
-		}
-	}
+    internal class TestClass
+    {
+        internal TestClass()
+        {
+            Console.WriteLine("loop starting!");
+            var bho = new BlockHistoryObjectCollection(100);
+            for (int i = 0; i < 120; i++)
+            {
+                bho.Add(new BlockHistoryObject("BHO: " + i));
+            }
+            foreach (BlockHistoryObject bho1 in bho)
+            {
+                Console.WriteLine("loopy");
+                Console.WriteLine(bho1.Name);
+            }
+        }
+    }
 
-	struct BlockHistoryObject
-	{
-		public string Name;
-		public BlockHistoryObject(string name)
-		{
-			Name = name;
-		}
-	}
+    internal struct BlockHistoryObject
+    {
+        public string Name;
 
-	internal class BlockHistoryObjectCollection : ICollection
-	{
-		BlockHistoryObject[] collectionArray;
-		int collectionSize;
-		int currentPosition = 0;
-		bool isFull = false;
+        public BlockHistoryObject(string name)
+        {
+            Name = name;
+        }
+    }
 
-		internal BlockHistoryObjectCollection(int size)
-		{
-			collectionSize = size;
-			collectionArray = new BlockHistoryObject[size];
-		}
+    internal class BlockHistoryObjectCollection : ICollection
+    {
+        private readonly BlockHistoryObject[] _collectionArray;
+        private readonly int _collectionSize;
+        private int _currentPosition;
+        private bool _isFull;
 
-		internal void Add(BlockHistoryObject incoming)
-		{
-			collectionArray[currentPosition] = incoming;
-			currentPosition++;
-			if (currentPosition == 100)
-			{
-				currentPosition = 0;
-				isFull = true;
-			}
-		}
+        internal BlockHistoryObjectCollection(int size)
+        {
+            _collectionSize = size;
+            _collectionArray = new BlockHistoryObject[size];
+        }
 
-		void ICollection.CopyTo(Array myArr, int index)
-		{
-			foreach (BlockHistoryObject bho in collectionArray)
-			{
-				myArr.SetValue(bho, index);
-				index++;
-			}
-		}
-		bool ICollection.IsSynchronized
-		{
-			get
-			{
-				return false;
-			}
-		}
-		object ICollection.SyncRoot
-		{
-			get
-			{
-				return this;
-			}
-		}
-		int ICollection.Count
-		{
-			get
-			{
-				int count = currentPosition;
-				if (isFull)
-				{
-					count = collectionSize;
-				}
-				return count;
-			}
-		}
+        #region ICollection Members
 
-		IEnumerator IEnumerable.GetEnumerator()
-		{
-			int offset = 0;
-			int count = currentPosition;
-			if (isFull)
-			{
-				count = collectionSize;
-				offset = currentPosition;
-			}
+        void ICollection.CopyTo(Array myArr, int index)
+        {
+            foreach (BlockHistoryObject bho in _collectionArray)
+            {
+                myArr.SetValue(bho, index);
+                index++;
+            }
+        }
 
-			return new BlockHistoryObjectCollectionEnumerator(collectionArray, offset, count);
-		}
+        bool ICollection.IsSynchronized
+        {
+            get { return false; }
+        }
 
-		
-	}
+        object ICollection.SyncRoot
+        {
+            get { return this; }
+        }
 
-	class BlockHistoryObjectCollectionEnumerator : IEnumerator
-	{
-		private BlockHistoryObject[] collection;
-		private int startPosition = -1;
-		private int Cursor = -1;
-		private int Count = 0;
-		private int MaxCount = 100;
+        int ICollection.Count
+        {
+            get
+            {
+                int count = _currentPosition;
+                if (_isFull)
+                {
+                    count = _collectionSize;
+                }
+                return count;
+            }
+        }
 
-		internal BlockHistoryObjectCollectionEnumerator(BlockHistoryObject[] bho, int bhoPosition, int count)
-		{
-			collection = bho;
-			startPosition = bhoPosition - 1; //We have to start at -1
-			Cursor = startPosition;
-			MaxCount = count;
-		}
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            int offset = 0;
+            int count = _currentPosition;
+            if (_isFull)
+            {
+                count = _collectionSize;
+                offset = _currentPosition;
+            }
 
-		void IEnumerator.Reset()
-		{
-			Cursor = startPosition;
-			Count = 0;
-		}
-		bool IEnumerator.MoveNext()
-		{
-			//Check that we are within the bounds of the array
-			Count++;
-			if (Count > MaxCount) return false;
+            return new BlockHistoryObjectCollectionEnumerator(_collectionArray, offset, count);
+        }
 
-			Cursor++;
-			if (Cursor >= MaxCount) Cursor -= MaxCount;
+        #endregion
 
-			//if (!collection[Cursor].isInitialized) return false;
+        internal void Add(BlockHistoryObject incoming)
+        {
+            _collectionArray[_currentPosition] = incoming;
+            _currentPosition++;
+            if (_currentPosition == 100)
+            {
+                _currentPosition = 0;
+                _isFull = true;
+            }
+        }
+    }
 
-			return true;
-		}
-		object IEnumerator.Current
-		{
-			get
-			{
-				if ((Cursor < 0) || (Cursor == collection.Length))
-					throw new InvalidOperationException();
-				return collection[Cursor];
-			}
-		}
-	}
+    internal class BlockHistoryObjectCollectionEnumerator : IEnumerator
+    {
+        private readonly BlockHistoryObject[] _collection;
+        private readonly int _maxCount = 100;
+        private readonly int _startPosition = -1;
+        private int _count;
+        private int _cursor = -1;
+
+        internal BlockHistoryObjectCollectionEnumerator(BlockHistoryObject[] bho, int bhoPosition, int count)
+        {
+            _collection = bho;
+            _startPosition = bhoPosition - 1; //We have to start at -1
+            _cursor = _startPosition;
+            _maxCount = count;
+        }
+
+        #region IEnumerator Members
+
+        void IEnumerator.Reset()
+        {
+            _cursor = _startPosition;
+            _count = 0;
+        }
+
+        bool IEnumerator.MoveNext()
+        {
+            //Check that we are within the bounds of the array
+            _count++;
+            if (_count > _maxCount) return false;
+
+            _cursor++;
+            if (_cursor >= _maxCount) _cursor -= _maxCount;
+
+            //if (!collection[Cursor].isInitialized) return false;
+
+            return true;
+        }
+
+        object IEnumerator.Current
+        {
+            get
+            {
+                if ((_cursor < 0) || (_cursor == _collection.Length))
+                    throw new InvalidOperationException();
+                return _collection[_cursor];
+            }
+        }
+
+        #endregion
+    }
 }

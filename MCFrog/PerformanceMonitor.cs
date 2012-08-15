@@ -1,37 +1,35 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using System.Diagnostics;
+using System.Threading;
 
 namespace MCFrog
 {
-	class PerformanceMonitor
-	{
-		bool _isEnabled = true;
-		bool isEnabled = true;
-		System.Diagnostics.Process proc;
-		DateTime startTime;
+    internal class PerformanceMonitor
+    {
+        private readonly Process _proc;
+        private bool _isEnabled = true;
+        private DateTime _startTime;
 
-		internal PerformanceMonitor()
-		{
-			proc = System.Diagnostics.Process.GetCurrentProcess();
-			startTime = proc.StartTime;
+        internal PerformanceMonitor()
+        {
+            _proc = Process.GetCurrentProcess();
+            _startTime = _proc.StartTime;
 
-			StartLoop();
-		}
+            StartLoop();
+        }
 
-		void StartLoop()
-		{
-			while (!Server.shouldShutdown && isEnabled)
-			{
-				System.Threading.Thread.Sleep(10000); //Ten second wait time
+        private void StartLoop()
+        {
+            while (!Server.ShouldShutdown && _isEnabled)
+            {
+                Thread.Sleep(10000); //Ten second wait time
 
-				//TimeSpan timeSpan = DateTime.Now - startTime;
-				//Server.Log("Uptime: " + timeSpan.ToString(), LogTypesEnum.info);
+                //TimeSpan timeSpan = DateTime.Now - startTime;
+                //Server.Log("Uptime: " + timeSpan.ToString(), LogTypesEnum.info);
 
-				//Server.Log("", LogTypesEnum.info);
-			}
-			isEnabled = false;
-		}
-	}
+                //Server.Log("", LogTypesEnum.info);
+            }
+            _isEnabled = false;
+        }
+    }
 }

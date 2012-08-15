@@ -1,19 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using System.Collections.Generic;
 
 namespace MCFrog
 {
 	public class LevelHandler
 	{
-		internal static Level lobby;
+		internal static Level Lobby;
 
-		internal static List<Level> levels = new List<Level>();
+		internal static List<Level> Levels = new List<Level>();
 
 		public LevelHandler()
 		{
-			lobby = new Level("test", 128, 64, 128);
+			Lobby = new Level("test", 128, 64, 128);
 		}
 	}
 }

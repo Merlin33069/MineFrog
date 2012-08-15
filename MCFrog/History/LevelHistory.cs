@@ -1,20 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace MCFrog.History
 {
 	class LevelHistory
 	{
 		//Store history data for each block
-		internal Dictionary<int, hisData> History = new Dictionary<int, hisData>();
-		internal string name;
+		internal Dictionary<int, HisData> History = new Dictionary<int, HisData>();
+		internal string Name;
 
 		internal LevelHistory(string levelName)
 		{
 			//TODO load l's history
-			name = levelName;
+			Name = levelName;
 		}
 
 		internal void Save()
@@ -24,10 +22,10 @@ namespace MCFrog.History
 	}
 
 	[Serializable]
-	public class hisData
+	public class HisData
 	{
-		internal bool empty = false;
+		internal bool Empty = false;
 		internal int UID; //User id that modified the block
-		internal byte type; //Old TYPE of the block
+		internal byte Type; //Old TYPE of the block
 	}
 }

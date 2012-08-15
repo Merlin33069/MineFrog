@@ -1,65 +1,61 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Net;
 using System.Net.Sockets;
 
 namespace MCFrog
 {
-	public class ConnectionHandler
-	{
-		static TcpListener listener;
+    public class ConnectionHandler
+    {
+        private static TcpListener _listener;
 
-		public ConnectionHandler()
-		{
-			StartListening();
-			Console.WriteLine("test");
-		}
+        public ConnectionHandler()
+        {
+            StartListening();
+            Console.WriteLine("test");
+        }
 
-		static void StartListening()
-		{
-			while (!Server.shouldShutdown)
-			{
-				try
-				{
-					listener = new TcpListener(System.Net.IPAddress.Any, Configuration.PORT);
-					listener.Start();
-					IAsyncResult ar = listener.BeginAcceptTcpClient(new AsyncCallback(AcceptCallback), listener);
-					break;
-				}
-				catch (SocketException E)
-				{
-					Console.WriteLine("e1");
-					Server.Log(E, LogTypesEnum.error);
-					break;
-				}
-				catch (Exception E)
-				{
-					Console.WriteLine("e2");
-					Server.Log(E, LogTypesEnum.error);
-					continue;
-				}
-			}
-		}
-		private static void AcceptCallback(IAsyncResult ar)
-		{
-			TcpListener listener2 = (TcpListener)ar.AsyncState;
-			try
-			{
-				TcpClient clientSocket = listener2.EndAcceptTcpClient(ar);
-				PlayerHandler.Connections.Add(new Player(clientSocket));
-			}
-			catch (Exception e)
-			{
-				Server.Log(e.Message, LogTypesEnum.error);
-			}
+        private static void StartListening()
+        {
+            while (!Server.ShouldShutdown)
+            {
+                try
+                {
+                    _listener = new TcpListener(IPAddress.Any, Configuration.PORT);
+                    _listener.Start();
+                    _listener.BeginAcceptTcpClient(AcceptCallback, _listener);
+                    break;
+                }
+                catch (SocketException e)
+                {
+                    Console.WriteLine("e1");
+                    Server.Log(e, LogTypesEnum.Error);
+                    break;
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine("e2");
+                    Server.Log(e, LogTypesEnum.Error);
+                }
+            }
+        }
 
-			if (!Server.shouldShutdown)
-			{
-				listener.BeginAcceptTcpClient(new AsyncCallback(AcceptCallback), listener);
-			}
-		}
+        private static void AcceptCallback(IAsyncResult ar)
+        {
+            var listener2 = (TcpListener) ar.AsyncState;
+            try
+            {
+                TcpClient clientSocket = listener2.EndAcceptTcpClient(ar);
+                PlayerHandler.Connections.Add(new Player(clientSocket));
+            }
+            catch (Exception e)
+            {
+                Server.Log(e.Message, LogTypesEnum.Error);
+            }
 
-	}
+            if (!Server.ShouldShutdown)
+            {
+                _listener.BeginAcceptTcpClient(AcceptCallback, _listener);
+            }
+        }
+    }
 }

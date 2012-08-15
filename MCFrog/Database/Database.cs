@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 
 using System.IO;
@@ -8,7 +7,7 @@ namespace MCFrog.Database
 {
 	class Database
 	{
-		static ASCIIEncoding encode = new ASCIIEncoding();
+		static readonly ASCIIEncoding Encode = new ASCIIEncoding();
 		Table usersTable;
 		Table groupsTable;
 
@@ -21,8 +20,9 @@ namespace MCFrog.Database
 			Group = 4,
 		}
 
-		string keyfilePath = "database/keyfile.DKF";
-		internal void LoadKeyFile()
+	    private const string keyfilePath = "database/keyfile.DKF";
+
+	    internal void LoadKeyFile()
 		{
 			Console.WriteLine("Loading DB Keyfile!");
 			try
@@ -34,7 +34,7 @@ namespace MCFrog.Database
 				if (!File.Exists(keyfilePath))
 				{
 					//TODO Generate Database Keyfile :D
-					FileStream fs = new FileStream(keyfilePath, FileMode.Create);
+					var fs = new FileStream(keyfilePath, FileMode.Create);
 
 					//TODO write out the format :D
 
@@ -55,11 +55,11 @@ namespace MCFrog.Database
 
 				}
 
-				FileStream file = new FileStream(keyfilePath, FileMode.Open);
+				var file = new FileStream(keyfilePath, FileMode.Open);
 
 				//user table keyfile loading
 				int userTableColumnCount = file.ReadByte();
-				byte[] userTableDataTypes = new byte[userTableColumnCount];
+				var userTableDataTypes = new byte[userTableColumnCount];
 				file.Read(userTableDataTypes, 0, userTableColumnCount);
 				
 				file.Flush();
@@ -79,7 +79,7 @@ namespace MCFrog.Database
 
 		static DataTypes[] GetDataTypes(byte[] array)
 		{
-			DataTypes[] types = new DataTypes[array.Length];
+			var types = new DataTypes[array.Length];
 
 			for (int i = 0; i < array.Length; i++)
 			{
@@ -88,7 +88,7 @@ namespace MCFrog.Database
 
 			return types;
 		}
-		static int GetTotalSize(DataTypes[] types)
+		static int GetTotalSize(IEnumerable<DataTypes> types)
 		{
 			int i = 0;
 
@@ -126,7 +126,7 @@ namespace MCFrog.Database
 		}
 		internal static byte[] GetBytes(int size, DataTypes[] types, object[] data)
 		{
-			byte[] bytes = new byte[size];
+			var bytes = new byte[size];
 			int currentPlace = 0;
 
 			for (int i = 0; i < types.Length; ++i)
@@ -168,11 +168,11 @@ namespace MCFrog.Database
 						break;
 					case DataTypes.Name:
 						string s = ((string)data[i]).PadRight(16);
-						encode.GetBytes(s).CopyTo(bytes, currentPlace);
+						Encode.GetBytes(s).CopyTo(bytes, currentPlace);
 						break;
 					case DataTypes.Message:
 						string st = ((string)data[i]).PadRight(64);
-						encode.GetBytes(st).CopyTo(bytes, currentPlace);
+						Encode.GetBytes(st).CopyTo(bytes, currentPlace);
 						break;
 				}
 

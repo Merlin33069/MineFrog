@@ -53,6 +53,7 @@
     <Compile Include="CommandHandler.cs" />
     <Compile Include="Configuration.cs" />
     <Compile Include="ConnectionHandler.cs" />
+    <Compile Include="Copy of Player.cs" />
     <Compile Include="Database\Database.cs" />
     <Compile Include="Database\DatabaseController.cs" />
     <Compile Include="Database\Table.cs" />
