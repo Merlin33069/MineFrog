@@ -1,74 +1,90 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
+using System.IO;
 using System.Text;
 
-using System.IO;
 namespace MCFrog.Database
 {
-	class Database
-	{
-		static readonly ASCIIEncoding Encode = new ASCIIEncoding();
-		Table usersTable;
-		Table groupsTable;
+	//STATIC IS BAD
 
-		enum UserTableColumns
+	public class Database
+	{
+		internal const string KeyfilePath = "database/keyfile.DKF";
+		internal const string DatabaseFilesPrePath = "database/";
+		public bool IsInitialized = false;
+		
+		private readonly ASCIIEncoding Encode = new ASCIIEncoding();
+
+		private readonly Dictionary<string, Table> LoadedTables = new Dictionary<string, Table>();
+
+		internal Database()
 		{
-			UID = 0,
-			Username = 1,
-			Nickname = 2,
-			IP = 3,
-			Group = 4,
+			Table.database = this;
+			LoadKeyFile();
 		}
 
-	    private const string keyfilePath = "database/keyfile.DKF";
-
-	    internal void LoadKeyFile()
+		internal void LoadKeyFile()
 		{
 			Console.WriteLine("Loading DB Keyfile!");
 			try
 			{
-				if(!Directory.Exists(keyfilePath.Split('/')[0].Trim()))
+				if (!Directory.Exists(KeyfilePath.Split('/')[0].Trim())) //Check for firectory
 				{
-					Directory.CreateDirectory(keyfilePath.Split('/')[0].Trim());
+					Directory.CreateDirectory(KeyfilePath.Split('/')[0].Trim()); //Create directory if needed
 				}
-				if (!File.Exists(keyfilePath))
+				if (!File.Exists(KeyfilePath)) //Check for keyfile
 				{
-					//TODO Generate Database Keyfile :D
-					var fs = new FileStream(keyfilePath, FileMode.Create);
-
-					//TODO write out the format :D
-
-					#region Users Table
-					//Column Count
-					fs.WriteByte(2);
-
-					//Data Values for table
-					fs.WriteByte((byte)DataTypes.Int); //UID
-					fs.WriteByte((byte)DataTypes.Name); //Username
-					fs.WriteByte((byte)DataTypes.Message); //NickName
-					fs.WriteByte((byte)DataTypes.Name); //IP
-					fs.WriteByte((byte)DataTypes.Byte); //Group
-					#endregion
-
-					fs.Flush();
-					fs.Close();
-
+					File.Create(KeyfilePath); //Create keyfile if needed!
+					return;
 				}
 
-				var file = new FileStream(keyfilePath, FileMode.Open);
+				FileStream fileStream = File.OpenRead(KeyfilePath);
+				long length = fileStream.Length;
 
-				//user table keyfile loading
-				int userTableColumnCount = file.ReadByte();
-				var userTableDataTypes = new byte[userTableColumnCount];
-				file.Read(userTableDataTypes, 0, userTableColumnCount);
-				
-				file.Flush();
-				file.Close();
+				if(length == 0) //Making sure that the dater is in da keyfile
+				{
+					//Nothing to see here ^_^
+					return;
+				}
+				if (length <= 16) //Here were just checking to make sure there is data in the keyfile. that is worth reading.
+				{
+					fileStream.Close();
+					File.Delete(KeyfilePath);
+					throw (new FileLoadException("KeyFile INVALID!"));
+				}
 
-				DataTypes[] types = GetDataTypes(userTableDataTypes);
-				usersTable = new Table("database/users.FDB", types, GetTotalSize(types));
+				/*
+				 * KeyFile Structure:
+				 * 
+				 * MESSAGE > Name
+				 * BYTE > Number of columns
+				 * Data[] > Datatypes
+				 * 
+				 */
+				while (fileStream.Position < length)
+				{
+					Console.WriteLine("Loading tabel!");
+					var tableName = (string) GetData(DataTypes.Name, fileStream);
 
-				//TODO group keyfile loading
+					var numberOfColumns = (byte) fileStream.ReadByte();
+
+					var dataTypesIntermediateBytes = new byte[numberOfColumns];
+
+					fileStream.Read(dataTypesIntermediateBytes, 0, numberOfColumns);
+
+					DataTypes[] dataTypes = GetDataTypes(dataTypesIntermediateBytes);
+					
+					//Add this table to our list of LOADED tables
+					tableName = tableName.Trim();
+					Console.WriteLine("'" + DatabaseFilesPrePath + tableName+"'");
+					LoadedTables.Add(tableName.ToLower(),
+									  new Table(tableName, DatabaseFilesPrePath + tableName, dataTypes, GetTotalSize(dataTypes)));
+				}
+
+				fileStream.Close();
+
+				IsInitialized = true;
 			}
 			catch (Exception e)
 			{
@@ -77,18 +93,19 @@ namespace MCFrog.Database
 			}
 		}
 
-		static DataTypes[] GetDataTypes(byte[] array)
+		internal DataTypes[] GetDataTypes(byte[] array)
 		{
 			var types = new DataTypes[array.Length];
 
 			for (int i = 0; i < array.Length; i++)
 			{
-				types[i] = (DataTypes)array[i];
+				types[i] = (DataTypes) array[i];
 			}
 
 			return types;
 		}
-		static int GetTotalSize(IEnumerable<DataTypes> types)
+
+		internal int GetTotalSize(IEnumerable<DataTypes> types)
 		{
 			int i = 0;
 
@@ -97,7 +114,8 @@ namespace MCFrog.Database
 
 			return i;
 		}
-		static byte GetSize(DataTypes type)
+
+		internal byte GetSize(DataTypes type)
 		{
 			switch (type)
 			{
@@ -124,7 +142,8 @@ namespace MCFrog.Database
 					return 0;
 			}
 		}
-		internal static byte[] GetBytes(int size, DataTypes[] types, object[] data)
+
+		internal byte[] GetBytes(int size, DataTypes[] types, object[] data)
 		{
 			var bytes = new byte[size];
 			int currentPlace = 0;
@@ -134,44 +153,44 @@ namespace MCFrog.Database
 				switch (types[i])
 				{
 					case DataTypes.Bool:
-						BitConverter.GetBytes((bool)data[i]).CopyTo(bytes, currentPlace);
+						BitConverter.GetBytes((bool) data[i]).CopyTo(bytes, currentPlace);
 						break;
 					case DataTypes.DateTime:
-						BitConverter.GetBytes(((DateTime)data[i]).ToBinary()).CopyTo(bytes, currentPlace);
+						BitConverter.GetBytes(((DateTime) data[i]).ToBinary()).CopyTo(bytes, currentPlace);
 						break;
 					case DataTypes.Byte:
-						bytes[currentPlace] = (byte)data[i];
+						bytes[currentPlace] = (byte) data[i];
 						break;
 					case DataTypes.Short:
-						BitConverter.GetBytes((short)data[i]).CopyTo(bytes, currentPlace);
+						BitConverter.GetBytes((short) data[i]).CopyTo(bytes, currentPlace);
 						break;
 					case DataTypes.UShort:
-						BitConverter.GetBytes((ushort)data[i]).CopyTo(bytes, currentPlace);
+						BitConverter.GetBytes((ushort) data[i]).CopyTo(bytes, currentPlace);
 						break;
 					case DataTypes.Int:
-						BitConverter.GetBytes((int)data[i]).CopyTo(bytes, currentPlace);
+						BitConverter.GetBytes((int) data[i]).CopyTo(bytes, currentPlace);
 						break;
 					case DataTypes.UInt:
-						BitConverter.GetBytes((uint)data[i]).CopyTo(bytes, currentPlace);
+						BitConverter.GetBytes((uint) data[i]).CopyTo(bytes, currentPlace);
 						break;
 					case DataTypes.Long:
-						BitConverter.GetBytes((long)data[i]).CopyTo(bytes, currentPlace);
+						BitConverter.GetBytes((long) data[i]).CopyTo(bytes, currentPlace);
 						break;
 					case DataTypes.ULong:
-						BitConverter.GetBytes((ulong)data[i]).CopyTo(bytes, currentPlace);
+						BitConverter.GetBytes((ulong) data[i]).CopyTo(bytes, currentPlace);
 						break;
 					case DataTypes.Float:
-						BitConverter.GetBytes((float)data[i]).CopyTo(bytes, currentPlace);
+						BitConverter.GetBytes((float) data[i]).CopyTo(bytes, currentPlace);
 						break;
 					case DataTypes.Double:
-						BitConverter.GetBytes((double)data[i]).CopyTo(bytes, currentPlace);
+						BitConverter.GetBytes((double) data[i]).CopyTo(bytes, currentPlace);
 						break;
 					case DataTypes.Name:
-						string s = ((string)data[i]).PadRight(16);
+						string s = ((string) data[i]).PadRight(16);
 						Encode.GetBytes(s).CopyTo(bytes, currentPlace);
 						break;
 					case DataTypes.Message:
-						string st = ((string)data[i]).PadRight(64);
+						string st = ((string) data[i]).PadRight(64);
 						Encode.GetBytes(st).CopyTo(bytes, currentPlace);
 						break;
 				}
@@ -181,9 +200,114 @@ namespace MCFrog.Database
 
 			return bytes;
 		}
+
+		internal object GetData(DataTypes type, FileStream fileStream)
+		{
+			//Used to temporarily hold Data we are getting.
+			var tempData = new byte[64];
+
+			switch (type)
+			{
+				case DataTypes.Bool:
+					fileStream.Read(tempData, 0, 1);
+					return BitConverter.ToBoolean(tempData, 0);
+				case DataTypes.DateTime:
+					fileStream.Read(tempData, 0, 8);
+					return BitConverter.ToInt64(tempData, 0);
+				case DataTypes.Byte:
+					fileStream.Read(tempData, 0, 1);
+					return tempData[0];
+				case DataTypes.Short:
+					fileStream.Read(tempData, 0, 2);
+					return BitConverter.ToInt16(tempData, 0);
+				case DataTypes.UShort:
+					fileStream.Read(tempData, 0, 2);
+					return BitConverter.ToUInt16(tempData, 0);
+				case DataTypes.Int:
+					fileStream.Read(tempData, 0, 4);
+					return BitConverter.ToInt32(tempData, 0);
+				case DataTypes.UInt:
+					fileStream.Read(tempData, 0, 4);
+					return BitConverter.ToUInt32(tempData, 0);
+				case DataTypes.Long:
+					fileStream.Read(tempData, 0, 8);
+					return BitConverter.ToInt64(tempData, 0);
+				case DataTypes.ULong:
+					fileStream.Read(tempData, 0, 8);
+					return BitConverter.ToUInt64(tempData, 0);
+				case DataTypes.Float:
+					fileStream.Read(tempData, 0, 4);
+					return BitConverter.ToSingle(tempData, 0);
+				case DataTypes.Double:
+					fileStream.Read(tempData, 0, 8);
+					return BitConverter.ToDouble(tempData, 0);
+				case DataTypes.Name:
+					fileStream.Read(tempData, 0, 16);
+					return Encode.GetString(tempData, 0, 16).Trim();
+				case DataTypes.Message:
+					fileStream.Read(tempData, 0, 64);
+					return Encode.GetString(tempData).Trim();
+				default:
+					throw (new DataException("KEYFILE DATA VALUE OUT OF RANGE: Unknown DataType in Keyfile!"));
+			}
+		}
+
+		internal void CreateNewTable(string name, DataTypes[] dataTypes)
+		{
+			name = name.Trim();
+
+			if(name.Length > 16)
+			{
+				throw (new ArgumentException("Table name must be no longer than 16 characters!"));
+			}
+
+			var fileStream = File.Open(KeyfilePath, FileMode.Append);
+
+			var toWrite = Encode.GetBytes(name.PadRight(16));
+			fileStream.Write(toWrite, 0, 16);
+			fileStream.WriteByte((byte)dataTypes.Length);
+			for (int i = 0; i < dataTypes.Length;i++ ) fileStream.WriteByte((byte)dataTypes[i]);
+
+			fileStream.Flush();
+			fileStream.Close();
+
+			LoadedTables.Add(name.ToLower(),
+									  new Table(name, DatabaseFilesPrePath + name, dataTypes, GetTotalSize(dataTypes)));
+		}
+
+		#region Table Exist and Find Methods
+
+		/// <summary>
+		/// Method to check whether a table exists in the Loaded Dictionary or not.
+		/// </summary>
+		/// <param name="name">The name of the table to look for</param>
+		/// <returns>A value (bool) representing whether this table exists or not</returns>
+		internal bool TableExists(string name)
+		{
+			return LoadedTables.ContainsKey(name.Trim().ToLower());
+		}
+
+		/// <summary>
+		/// Method to Find a specified table by name
+		/// </summary>
+		/// <param name="name">The name of the table to find.</param>
+		/// <returns>The table referance or NULL if not found.</returns>
+		internal Table TableFind(string name)
+		{
+			try
+			{
+				return LoadedTables[name.Trim().ToLower()];
+			}
+			catch (Exception)
+			{
+				return null;
+			}
+		}
+
+		#endregion
 	}
 
-	enum DataTypes : byte
+	public enum DataTypes : byte
 	{
 		Bool = 0,
 		DateTime = 1,

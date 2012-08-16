@@ -4,25 +4,23 @@ namespace MCFrog.Database
 {
 	public class DatabaseController : MarshalByRefObject
 	{
-		Database database;
+		public Database database;
 
 		public DatabaseController()
 		{
 			Console.WriteLine("Starting DB Controller...");
 
 			database = new Database();
-
-			database.LoadKeyFile();
 		}
 
-
-
-
-
-
-
-
-
+		public bool TableExists(string tableName)
+		{
+			return database.TableExists(tableName);
+		}
+		public void CreateNewTable(string name, DataTypes[] dataTypes)
+		{
+			database.CreateNewTable(name, dataTypes);
+		}
 
 		public override object InitializeLifetimeService()
 		{

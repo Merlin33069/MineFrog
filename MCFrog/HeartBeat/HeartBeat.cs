@@ -10,14 +10,16 @@ namespace MCFrog.HeartBeat
 		static string _hash;
 		public static string ServerURL;
 		static string _staticVars;
+		public byte CurrentPlayers = 0;
+
 
 		//static BackgroundWorker worker;
 		static HttpWebRequest _request;
 		static readonly System.Timers.Timer HeartbeatTimer = new System.Timers.Timer(60000);
 
-	    private bool IsWorkaroundEnabled = false;
+		private bool IsWorkaroundEnabled = false;
 
-	    public HeartBeat()
+		public HeartBeat()
 		{
 			Console.WriteLine("Heartbeat Initializing...");
 			HeartbeatTimer.Elapsed += delegate
@@ -48,10 +50,10 @@ namespace MCFrog.HeartBeat
 				"&public=" + Configuration.PUBLIC +
 				"&version=" + Configuration.VERSION;
 
-			Beat();
+			Beat(CurrentPlayers);
 		}
 
-	    static void Beat()
+		static void Beat(int currentPlayers)
 		{
 			//Console.WriteLine("Beating!");
 			
@@ -60,7 +62,7 @@ namespace MCFrog.HeartBeat
 			const string url = "http://www.minecraft.net/heartbeat.jsp";
 
 			postVars += "&salt=" + Configuration.ServerSalt;
-			postVars += "&users=" + 0; //TODO get player count
+			postVars += "&users=" + currentPlayers;
 
 			_request = (HttpWebRequest)WebRequest.Create(new Uri(url));
 			_request.Method = "POST";
@@ -138,8 +140,8 @@ namespace MCFrog.HeartBeat
 			return output.ToString();
 		}
 
-	    readonly char[] _reservedChars = { ' ', '!', '*', '\'', '(', ')', ';', ':', '@', '&',
-                                                 '=', '+', '$', ',', '/', '?', '%', '#', '[', ']' };
+		readonly char[] _reservedChars = { ' ', '!', '*', '\'', '(', ')', ';', ':', '@', '&',
+												 '=', '+', '$', ',', '/', '?', '%', '#', '[', ']' };
 
 		public override object InitializeLifetimeService()
 		{

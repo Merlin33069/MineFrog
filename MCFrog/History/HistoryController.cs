@@ -10,8 +10,8 @@ namespace MCFrog.History
 			Console.WriteLine("History System Started!");
 		}
 
-	    readonly Dictionary<string, LevelHistory> _loadedHistories = new Dictionary<string, LevelHistory>();
-	    readonly HisData _empty = new HisData { Empty = true };
+		readonly Dictionary<string, LevelHistory> _loadedHistories = new Dictionary<string, LevelHistory>();
+		readonly HisData _empty = new HisData { Empty = true };
 
 		public void LoadHistory(string levelName)
 		{
@@ -42,7 +42,7 @@ namespace MCFrog.History
 			{
 				return _loadedHistories[levelName].History[pos];
 			}
-		    return _empty;
+			return _empty;
 		}
 		public bool SetData(string levelName, int pos, byte type, int uid)
 		{
@@ -66,8 +66,8 @@ namespace MCFrog.History
 					lh.History[pos].UID = uid;
 					return true;
 				}
-			    lh.History.Add(pos, new HisData { Type = type, UID = uid });
-			    return true;
+				lh.History.Add(pos, new HisData { Type = type, UID = uid });
+				return true;
 			}
 			catch
 			{

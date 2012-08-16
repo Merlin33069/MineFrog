@@ -4,32 +4,32 @@ using System.Threading;
 
 namespace MCFrog
 {
-    internal class PerformanceMonitor
-    {
-        private readonly Process _proc;
-        private bool _isEnabled = true;
-        private DateTime _startTime;
+	internal class PerformanceMonitor
+	{
+		private readonly Process _proc;
+		private bool _isEnabled = true;
+		private DateTime _startTime;
 
-        internal PerformanceMonitor()
-        {
-            _proc = Process.GetCurrentProcess();
-            _startTime = _proc.StartTime;
+		internal PerformanceMonitor()
+		{
+			_proc = Process.GetCurrentProcess();
+			_startTime = _proc.StartTime;
 
-            StartLoop();
-        }
+			StartLoop();
+		}
 
-        private void StartLoop()
-        {
-            while (!Server.ShouldShutdown && _isEnabled)
-            {
-                Thread.Sleep(10000); //Ten second wait time
+		private void StartLoop()
+		{
+			while (!Server.ShouldShutdown && _isEnabled)
+			{
+				Thread.Sleep(10000); //Ten second wait time
 
-                //TimeSpan timeSpan = DateTime.Now - startTime;
-                //Server.Log("Uptime: " + timeSpan.ToString(), LogTypesEnum.info);
+				//TimeSpan timeSpan = DateTime.Now - startTime;
+				//Server.Log("Uptime: " + timeSpan.ToString(), LogTypesEnum.info);
 
-                //Server.Log("", LogTypesEnum.info);
-            }
-            _isEnabled = false;
-        }
-    }
+				//Server.Log("", LogTypesEnum.info);
+			}
+			_isEnabled = false;
+		}
+	}
 }
