@@ -64,7 +64,6 @@ namespace MCFrog.Database
 				 */
 				while (fileStream.Position < length)
 				{
-					Console.WriteLine("Loading tabel!");
 					var tableName = (string) GetData(DataTypes.Name, fileStream);
 
 					var numberOfColumns = (byte) fileStream.ReadByte();
@@ -77,7 +76,6 @@ namespace MCFrog.Database
 					
 					//Add this table to our list of LOADED tables
 					tableName = tableName.Trim();
-					Console.WriteLine("'" + DatabaseFilesPrePath + tableName+"'");
 					LoadedTables.Add(tableName.ToLower(),
 									  new Table(tableName, DatabaseFilesPrePath + tableName, dataTypes, GetTotalSize(dataTypes)));
 				}
@@ -145,6 +143,7 @@ namespace MCFrog.Database
 
 		internal byte[] GetBytes(int size, DataTypes[] types, object[] data)
 		{
+			if (size == 0) size = GetTotalSize(types);
 			var bytes = new byte[size];
 			int currentPlace = 0;
 
@@ -201,6 +200,72 @@ namespace MCFrog.Database
 			return bytes;
 		}
 
+		internal byte[] GetBytes(DataTypes dataType, object data)
+		{
+			var bytes = new byte[GetSize(dataType)];
+			switch (dataType)
+			{
+				case DataTypes.Bool:
+					BitConverter.GetBytes((bool) data).CopyTo(bytes, 0);
+					break;
+				case DataTypes.DateTime:
+					BitConverter.GetBytes(((DateTime) data).ToBinary()).CopyTo(bytes, 0);
+					break;
+				case DataTypes.Byte:
+					bytes[0] = (byte) data;
+					break;
+				case DataTypes.Short:
+					BitConverter.GetBytes((short) data).CopyTo(bytes, 0);
+					break;
+				case DataTypes.UShort:
+					BitConverter.GetBytes((ushort) data).CopyTo(bytes, 0);
+					break;
+				case DataTypes.Int:
+					BitConverter.GetBytes((int) data).CopyTo(bytes, 0);
+					break;
+				case DataTypes.UInt:
+					BitConverter.GetBytes((uint) data).CopyTo(bytes, 0);
+					break;
+				case DataTypes.Long:
+					BitConverter.GetBytes((long) data).CopyTo(bytes, 0);
+					break;
+				case DataTypes.ULong:
+					BitConverter.GetBytes((ulong) data).CopyTo(bytes, 0);
+					break;
+				case DataTypes.Float:
+					BitConverter.GetBytes((float) data).CopyTo(bytes, 0);
+					break;
+				case DataTypes.Double:
+					BitConverter.GetBytes((double) data).CopyTo(bytes, 0);
+					break;
+				case DataTypes.Name:
+					string s = ((string) data).PadRight(16);
+					Encode.GetBytes(s).CopyTo(bytes, 0);
+					break;
+				case DataTypes.Message:
+					string st = ((string) data).PadRight(64);
+					Encode.GetBytes(st).CopyTo(bytes, 0);
+					break;
+			}
+			return bytes;
+		}
+
+		internal int[] GetPositions(DataTypes[] types)
+		{
+			var positions = new int[types.Length];
+
+			for(int i = 0;i<types.Length;i++)
+			{
+				if (i == 0) positions[i] = 0;
+				else
+				{
+					positions[i] = positions[i - 1] + GetSize(types[i]);
+				}
+			}
+
+			return positions;
+		}
+
 		internal object GetData(DataTypes type, FileStream fileStream)
 		{
 			//Used to temporarily hold Data we are getting.
@@ -213,7 +278,7 @@ namespace MCFrog.Database
 					return BitConverter.ToBoolean(tempData, 0);
 				case DataTypes.DateTime:
 					fileStream.Read(tempData, 0, 8);
-					return BitConverter.ToInt64(tempData, 0);
+					return DateTime.FromBinary(BitConverter.ToInt64(tempData, 0));
 				case DataTypes.Byte:
 					fileStream.Read(tempData, 0, 1);
 					return tempData[0];
@@ -271,8 +336,10 @@ namespace MCFrog.Database
 			fileStream.Flush();
 			fileStream.Close();
 
-			LoadedTables.Add(name.ToLower(),
-									  new Table(name, DatabaseFilesPrePath + name, dataTypes, GetTotalSize(dataTypes)));
+			var table = new Table(name, DatabaseFilesPrePath + name, dataTypes, GetTotalSize(dataTypes));
+
+			LoadedTables.Add(name.ToLower(), table);
+
 		}
 
 		#region Table Exist and Find Methods

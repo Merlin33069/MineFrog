@@ -464,7 +464,7 @@ namespace MCFrog
 								SendMessage("Loading level: " + command[2]);
 								try
 								{
-									l = new Level(command[2]);
+									l = new Level(command[2], false);
 								}
 								catch (Exception e)
 								{

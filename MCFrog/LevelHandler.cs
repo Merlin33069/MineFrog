@@ -10,7 +10,8 @@ namespace MCFrog
 
 		public LevelHandler()
 		{
-			Lobby = new Level("test", 128, 64, 128);
+			Lobby = new Level("Lobby", true);
+			//Lobby = new Level("test", 128, 64, 128);
 		}
 	}
 }

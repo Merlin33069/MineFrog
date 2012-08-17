@@ -68,6 +68,8 @@ namespace MCFrog
 				return;
 			}
 			Server.Log("Table Exists (w00t w00t)", LogTypesEnum.Debug);
+
+			var table = DatabaseController.FindTable("users");
 			
 		}
 

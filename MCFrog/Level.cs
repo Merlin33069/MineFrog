@@ -27,9 +27,26 @@ namespace MCFrog
 
 		internal Pos SpawnPos;
 
-		internal Level(string fileName)
+		internal Level(string fileName, bool shouldCreateIfNotExist)
 		{
-			Load(fileName);
+			try
+			{
+				Load(fileName);
+			}
+			catch
+			{
+				try
+				{
+					Name = fileName;
+					Create(128, 64, 128);
+					FullSave();
+				}
+				catch (Exception e)
+				{
+					Server.Log(e, LogTypesEnum.Error);
+				}
+			}
+			
 
 			Server.HistoryController.LoadHistory(Name);
 			UncompressAndCreateHandle();

@@ -3,14 +3,17 @@ using System.IO;
 
 namespace MCFrog.Database
 {
+	[Serializable]
 	public class Table
 	{
 		internal static Database database;
 
 		readonly DataTypes[] _dataTypes; //The types of data that are in each row
+		private readonly int[] _dataPositions; //This is the position in each row of each column
+		private readonly FileStream _fileStream;
 
 		readonly string _name;
-		readonly int _rowSize; //Number of bytes in each row
+		readonly int _rowSize; //Number of bytes in each TBrow
 		readonly string _path; //The path to this table file
 		long _rowCount; //Number of rows currently in the table
 
@@ -20,18 +23,18 @@ namespace MCFrog.Database
 			_path = path;
 			_dataTypes = types;
 			_rowSize = size;
+			_dataPositions = database.GetPositions(_dataTypes);
 
-			if (!File.Exists(path))
-				File.Create(path);
+			//Open the file but dont close it until the table needs "unloaded"
+			_fileStream = File.Open(_path, FileMode.OpenOrCreate);
 
 			GetRowCount();
 		}
 
 		void GetRowCount()
 		{
-			var fi = new FileInfo(_path);
-			long size = fi.Length;
-
+			long size = _fileStream.Length;
+			
 			if ((size % _rowSize) != 0)
 			{
 				Console.WriteLine("OH MA GERDZ THE SIZE IS WRONG, FILE IZ CORRUPTEDZ!");
@@ -40,44 +43,65 @@ namespace MCFrog.Database
 			_rowCount = size / _rowSize;
 
 			Console.WriteLine("Number of rows in " + _name + ": " + _rowCount);
-
-			foreach (var dataTypes in _dataTypes)
-			{
-				Console.WriteLine(dataTypes + "");
-			}
-
 		}
 
-		long NewRow(object[] data)
+		public long NewRow(object[] data)
 		{
 			if (data.Length != _dataTypes.Length) throw new InvalidDataException("Invalid Column Count!");
 
-			long id = _rowCount;
+			var id = _rowCount;
 			++_rowCount;
 
-			byte[] bytes = database.GetBytes(_rowSize, _dataTypes, data);
+			var bytes = database.GetBytes(_rowSize, _dataTypes, data);
 
-			FileStream fs = new FileStream(_path, FileMode.Append);
+			var fs = new FileStream(_path, FileMode.Append);
 			fs.Write(bytes, 0, bytes.Length);
 			fs.Close();
 
 			return id;
 		}
 
-		void UpdateRow(long id, object[] data)
+		public void UpdateRow(long id, object[] data)
 		{
+			if (data.Length != _dataTypes.Length) throw new InvalidDataException("Invalid Column Count!");
 
+			var position = id*_rowSize;
+			var bytes = database.GetBytes(_rowSize, _dataTypes, data);
+
+			if (bytes.Length != _rowSize) throw new InvalidDataException("Invalid Columns Size!");
+
+			_fileStream.Position = position;
+
+			_fileStream.Write(bytes, 0, _rowSize);
 		}
-		void UpdateItem(long id, byte columnNumber, object data)
+		public void UpdateItem(long id, byte columnNumber, object data)
 		{
+			var position = (id * _rowSize) + _dataPositions[columnNumber];
+			var bytes = database.GetBytes(_dataTypes[columnNumber], data);
 
+			var size = database.GetSize(_dataTypes[columnNumber]);
+
+			if (bytes.Length != size) throw new InvalidDataException("Invalid data size!");
+
+			_fileStream.Position = position;
+
+			_fileStream.Write(bytes, 0, database.GetSize(_dataTypes[columnNumber]));
 		}
 
-		object GetData(int id, byte column)
+		public object[] GetData(int id)
 		{
-			return new object();
-			//TODO id*rowsize + columnsize_before_this_column
-			//thn we can get the data at that point :D
+			if (id > _rowCount) throw new InvalidDataException("ID was too high, not that many rows in table!");
+			var position = id * _rowSize;
+			var returnData = new object[_dataTypes.Length];
+
+			_fileStream.Position = position;
+
+			for (int i = 0; i < _dataTypes.Length; ++i)
+			{
+				returnData[i] = database.GetData(_dataTypes[i], _fileStream);
+			}
+
+			return returnData;
 		}
 
 	}

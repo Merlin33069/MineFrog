@@ -17,6 +17,10 @@ namespace MCFrog.Database
 		{
 			return database.TableExists(tableName);
 		}
+		public Table FindTable(string tableName)
+		{
+			return database.TableFind(tableName);
+		}
 		public void CreateNewTable(string name, DataTypes[] dataTypes)
 		{
 			database.CreateNewTable(name, dataTypes);
