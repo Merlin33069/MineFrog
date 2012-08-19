@@ -17,7 +17,7 @@ namespace MCFrog
 		private static readonly ASCIIEncoding Asen = new ASCIIEncoding();
 
 		private readonly TcpClient _tcpClient;
-		internal int UID = 1337; //This is the users Unique ID for the whole server
+		internal int UID = 0; //This is the users Unique ID for the whole server
 		internal byte UserId = 101; //This is the users ID in the session
 		private bool _isDisconnected;
 		private Pos _delta;
@@ -157,6 +157,20 @@ namespace MCFrog
 			Username = Asen.GetString(data, 1, 64).Trim();
 			string hash = Asen.GetString(data, 65, 64).Trim();
 			byte type = data[129];
+
+
+			PreLoader.PDB pdb = PreLoader.PDB.Find(Username.Trim().ToLower());
+			if(pdb == null)
+			{
+				var dbData = new object[] {Username, "", _ip, (byte) 0, (byte) 0, false, false};
+				UID = Server.users.NewRow(dbData);
+				new PreLoader.PDB(UID, dbData);
+				Server.Log(UID + " is this players UID :D", LogTypesEnum.Debug);
+			}
+			else
+			{
+				UID = pdb.UID;
+			}
 
 			Server.Log(Username + " Logging in with hash: " + hash + " and TYPE: " + type, LogTypesEnum.Info);
 			SendGlobalMessage(Username + " Logged In.");

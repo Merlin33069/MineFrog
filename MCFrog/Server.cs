@@ -18,6 +18,8 @@ namespace MCFrog
 		public DatabaseController DONOTUSEMEDatabaseControllerNS;
 		public HistoryController DONOTUSEMEHistoryControllerNS;
 
+		public static Table users;
+
 		public void Start()
 		{
 			HistoryController = DONOTUSEMEHistoryControllerNS;
@@ -67,10 +69,16 @@ namespace MCFrog
 				Server.Log("TABLE (yuno) YUNO BE MADE?", LogTypesEnum.Error);
 				return;
 			}
-			Server.Log("Table Exists (w00t w00t)", LogTypesEnum.Debug);
 
-			var table = DatabaseController.FindTable("users");
-			
+			users = DatabaseController.FindTable("users");
+
+			Console.WriteLine("test-1");
+			for(int i = 0;i<users.RowCount;++i)
+			{
+				Server.Log("Loading PDB #" + i, LogTypesEnum.Debug);
+				new PreLoader.PDB(i, users.GetData(i));
+			}
+
 		}
 
 		private void StartConnectionHandler()

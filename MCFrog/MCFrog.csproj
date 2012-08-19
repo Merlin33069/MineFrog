@@ -69,6 +69,7 @@
     <Compile Include="PhysicsHandler.cs" />
     <Compile Include="Player.cs" />
     <Compile Include="PlayerHandler.cs" />
+    <Compile Include="PreLoader\PDB.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Server.cs" />
     <EmbeddedResource Include="Properties\Resources.resx">

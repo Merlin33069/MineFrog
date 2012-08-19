@@ -6,19 +6,20 @@ namespace MCFrog.Database
 	[Serializable]
 	public class Table
 	{
-		internal static Database database;
+		internal Database database;
 
 		readonly DataTypes[] _dataTypes; //The types of data that are in each row
 		private readonly int[] _dataPositions; //This is the position in each row of each column
 		private readonly FileStream _fileStream;
 
 		readonly string _name;
-		readonly int _rowSize; //Number of bytes in each TBrow
+		readonly int _rowSize; //Number of bytes in each row
 		readonly string _path; //The path to this table file
-		long _rowCount; //Number of rows currently in the table
+		public int RowCount; //Number of rows currently in the table
 
-		internal Table(string name, string path, DataTypes[] types, int size)
+		internal Table(Database _database, string name, string path, DataTypes[] types, int size)
 		{
+			database = _database;
 			_name = name;
 			_path = path;
 			_dataTypes = types;
@@ -40,23 +41,26 @@ namespace MCFrog.Database
 				Console.WriteLine("OH MA GERDZ THE SIZE IS WRONG, FILE IZ CORRUPTEDZ!");
 				throw new IOException("ERROR, TABLE file is CORRUPT! " + _name);
 			}
-			_rowCount = size / _rowSize;
+			RowCount = (int)(size / _rowSize);
 
-			Console.WriteLine("Number of rows in " + _name + ": " + _rowCount);
+			Console.WriteLine("Number of rows in " + _name + ": " + RowCount);
 		}
 
-		public long NewRow(object[] data)
+		public int NewRow(object[] data)
 		{
 			if (data.Length != _dataTypes.Length) throw new InvalidDataException("Invalid Column Count!");
 
-			var id = _rowCount;
-			++_rowCount;
+			var id = RowCount;
+			++RowCount;
 
 			var bytes = database.GetBytes(_rowSize, _dataTypes, data);
 
-			var fs = new FileStream(_path, FileMode.Append);
-			fs.Write(bytes, 0, bytes.Length);
-			fs.Close();
+			//var fs = new FileStream(_path, FileMode.Append);
+			_fileStream.Position = _fileStream.Length;
+			_fileStream.Write(bytes, 0, bytes.Length);
+			_fileStream.Flush();
+			//var test = GetData(id);
+			//Console.WriteLine("username in db is: " + (string)test[0]);
 
 			return id;
 		}
@@ -90,7 +94,7 @@ namespace MCFrog.Database
 
 		public object[] GetData(int id)
 		{
-			if (id > _rowCount) throw new InvalidDataException("ID was too high, not that many rows in table!");
+			if (id > RowCount) throw new InvalidDataException("ID was too high, not that many rows in table!");
 			var position = id * _rowSize;
 			var returnData = new object[_dataTypes.Length];
 
@@ -103,6 +107,7 @@ namespace MCFrog.Database
 
 			return returnData;
 		}
+
 
 	}
 }

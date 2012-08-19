@@ -7,7 +7,7 @@ using System.Text;
 namespace MCFrog.Database
 {
 	//STATIC IS BAD
-
+[Serializable]
 	public class Database
 	{
 		internal const string KeyfilePath = "database/keyfile.DKF";
@@ -20,7 +20,6 @@ namespace MCFrog.Database
 
 		internal Database()
 		{
-			Table.database = this;
 			LoadKeyFile();
 		}
 
@@ -77,7 +76,7 @@ namespace MCFrog.Database
 					//Add this table to our list of LOADED tables
 					tableName = tableName.Trim();
 					LoadedTables.Add(tableName.ToLower(),
-									  new Table(tableName, DatabaseFilesPrePath + tableName, dataTypes, GetTotalSize(dataTypes)));
+									  new Table(this, tableName, DatabaseFilesPrePath + tableName, dataTypes, GetTotalSize(dataTypes)));
 				}
 
 				fileStream.Close();
@@ -335,8 +334,8 @@ namespace MCFrog.Database
 
 			fileStream.Flush();
 			fileStream.Close();
-
-			var table = new Table(name, DatabaseFilesPrePath + name, dataTypes, GetTotalSize(dataTypes));
+			
+			var table = new Table(this, name, DatabaseFilesPrePath + name, dataTypes, GetTotalSize(dataTypes));
 
 			LoadedTables.Add(name.ToLower(), table);
 
