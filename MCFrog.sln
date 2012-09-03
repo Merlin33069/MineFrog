@@ -1,11 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 11.00
-# Visual C# Express 2010
+# Visual Studio 2010
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MCFrog", "MCFrog\MCFrog.csproj", "{ACD45752-FD96-4AC4-82C3-A0ED8B020350}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StartConsole", "StartConsole\StartConsole.csproj", "{EBFD7F93-80AA-49B5-B6B8-24ED4C6BDB02}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LillyPad", "LillyPad\LillyPad.csproj", "{9B09A2AC-A7D8-49B6-B9B9-989A4683A7A3}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Commands", "Commands\Commands.csproj", "{2A6BDDDB-7030-42EC-94FB-09A4882ED20D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -47,6 +49,16 @@ Global
 		{9B09A2AC-A7D8-49B6-B9B9-989A4683A7A3}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
 		{9B09A2AC-A7D8-49B6-B9B9-989A4683A7A3}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{9B09A2AC-A7D8-49B6-B9B9-989A4683A7A3}.Release|x86.ActiveCfg = Release|Any CPU
+		{2A6BDDDB-7030-42EC-94FB-09A4882ED20D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2A6BDDDB-7030-42EC-94FB-09A4882ED20D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2A6BDDDB-7030-42EC-94FB-09A4882ED20D}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{2A6BDDDB-7030-42EC-94FB-09A4882ED20D}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{2A6BDDDB-7030-42EC-94FB-09A4882ED20D}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{2A6BDDDB-7030-42EC-94FB-09A4882ED20D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2A6BDDDB-7030-42EC-94FB-09A4882ED20D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2A6BDDDB-7030-42EC-94FB-09A4882ED20D}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{2A6BDDDB-7030-42EC-94FB-09A4882ED20D}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{2A6BDDDB-7030-42EC-94FB-09A4882ED20D}.Release|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

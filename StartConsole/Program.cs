@@ -17,7 +17,7 @@ namespace StartConsole
 			 * The GUI is a little more involved and we will get to that later.
 			 */
 			Console.Title = "MCFrog";
-
+			
 			if (UpdateCheck())
 			{
 				Update();

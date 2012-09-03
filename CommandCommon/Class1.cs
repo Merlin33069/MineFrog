@@ -3,10 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace MCFrog
+namespace CommandCommon
 {
-	class CommandHandler
+	public class Class1
 	{
-		
 	}
 }

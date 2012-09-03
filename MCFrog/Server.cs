@@ -35,6 +35,7 @@ namespace MCFrog
 				new Thread(StartPlayerHandler).Start();
 				new Thread(StartLevelHandler).Start();
 				new Thread(StartPerformanceMonitor).Start();
+				StartCommandHandler();
 
 				CheckDatabaseTables();
 			}
@@ -103,6 +104,12 @@ namespace MCFrog
 		{
 			Log("Starting PerformanceMonitor...", LogTypesEnum.System);
 			new PerformanceMonitor();
+		}
+
+		private void StartCommandHandler()
+		{
+			Log("Starting CommandHandler...", LogTypesEnum.System);
+			new Commands.CommandHandler();
 		}
 
 		public static void StartInput()

@@ -25,6 +25,10 @@ namespace MCFrog
 		internal ushort SizeY;
 		internal ushort SizeZ;
 
+		internal int BlockChangeCount;
+		internal int UpdateCountToSave = 0; //This counts up to the frequency, so we know when to save :D
+		internal int UpdateCountSaveFrequency = 30; //Each update check is 10 seconds, so this is 5 mins
+
 		internal Pos SpawnPos;
 
 		internal Level(string fileName, bool shouldCreateIfNotExist)
@@ -258,6 +262,8 @@ namespace MCFrog
 			}
 			BlockData[PosToInt(x, y, z)] = type;
 
+			BlockChangeCount++;
+
 			if (Physics != null)
 				PhysicsCheck(x, y, z);
 
@@ -415,6 +421,21 @@ namespace MCFrog
 		internal static Level Find(string name)
 		{
 			return LevelHandler.Levels.ToArray().FirstOrDefault(l => l.Name == name);
+		}
+
+		internal void SaveCheck()
+		{
+			Server.Log("Checking if level should save " + Name, LogTypesEnum.Debug);
+			UpdateCountToSave++;
+
+			if (UpdateCountToSave >= UpdateCountSaveFrequency || BlockChangeCount >= 1000)
+			{
+				Server.Log("Saving Level: " + Name, LogTypesEnum.Debug);
+				FullSave();
+
+				UpdateCountToSave = 0;
+				BlockChangeCount = 0;
+			}
 		}
 	}
 

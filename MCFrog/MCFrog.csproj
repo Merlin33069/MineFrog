@@ -50,9 +50,10 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Block.cs" />
-    <Compile Include="CommandHandler.cs" />
+    <Compile Include="Commands\CommandBase.cs" />
+    <Compile Include="Commands\CommandHandler.cs" />
     <Compile Include="Configuration.cs" />
-    <Compile Include="ConnectionHandler.cs" />
+    <Compile Include="Player\ConnectionHandler.cs" />
     <Compile Include="Copy of Player.cs" />
     <Compile Include="Database\Database.cs" />
     <Compile Include="Database\DatabaseController.cs" />
@@ -62,13 +63,13 @@
     <Compile Include="History\HistoryController.cs" />
     <Compile Include="History\LevelHistory.cs" />
     <Compile Include="InputOutput.cs" />
-    <Compile Include="Level.cs" />
-    <Compile Include="LevelHandler.cs" />
+    <Compile Include="Levels\Level.cs" />
+    <Compile Include="Levels\LevelHandler.cs" />
     <Compile Include="BlockHistoryObject.cs" />
     <Compile Include="PerformanceMonitor.cs" />
-    <Compile Include="PhysicsHandler.cs" />
-    <Compile Include="Player.cs" />
-    <Compile Include="PlayerHandler.cs" />
+    <Compile Include="Levels\PhysicsHandler.cs" />
+    <Compile Include="Player\Player.cs" />
+    <Compile Include="Player\PlayerHandler.cs" />
     <Compile Include="PreLoader\PDB.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Server.cs" />
@@ -92,6 +93,7 @@
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

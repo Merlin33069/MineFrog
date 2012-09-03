@@ -28,7 +28,7 @@ namespace MCFrog
 
 					if (Messagepart != "")
 					{
-						HandleCommand();
+						HandleCommand(Messagepart);
 					}
 
 					string overwrite = "";
@@ -79,8 +79,33 @@ namespace MCFrog
 			Log(logType.Prefix + message, logType.TextColor, logType.BackgroundColor);
 		}
 
-		private static void HandleCommand()
+		private static void HandleCommand(string message)
 		{
+			//Shit!
+
+			string[] command = message.Split(' ');
+			
+			string messageSend = "";
+			string[] parameters = new string[0];
+
+			string accessor = command[0].ToLower().Trim();
+			if(command.Length > 1)
+			{
+				message = message.Substring(accessor.Length + 1);
+				parameters = message.Split(' ');
+			}
+
+			if (Commands.CommandHandler.Commands.ContainsKey(accessor))
+				Commands.CommandHandler.Commands[accessor].Use(parameters, messageSend);
+			else
+			{
+				foreach (string S in Commands.CommandHandler.Commands.Keys)
+				{
+					Server.Log(S + "", LogTypesEnum.Info);
+				}
+				Server.Log("Commands cannot be used in the console at this time!", LogTypesEnum.Error);
+			}
+
 			//TODO ?
 		}
 

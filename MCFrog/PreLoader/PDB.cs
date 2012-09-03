@@ -64,9 +64,9 @@ namespace MCFrog.PreLoader
 			return null;
 		}
 		
-		internal PDB(int ID, object[] data)
+		internal PDB(int id, object[] data)
 		{
-			UID = ID;
+			UID = id;
 			Username = ((string)data[0]).Trim().ToLower();
 			Nickname = (string) data[1];
 			IP = (string)data[2];
@@ -76,6 +76,11 @@ namespace MCFrog.PreLoader
 			isMuted = (bool) data[6];
 
 			Pdbs.Add(Username, this);
+		}
+
+		internal void sync()
+		{
+
 		}
 	}
 }

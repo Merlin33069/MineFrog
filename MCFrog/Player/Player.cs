@@ -11,7 +11,7 @@ using MCFrog.History;
 
 namespace MCFrog
 {
-	internal class Player
+	public class Player
 	{
 		private const byte ProtocolVersion = 0x07;
 		private static readonly ASCIIEncoding Asen = new ASCIIEncoding();
@@ -25,10 +25,7 @@ namespace MCFrog
 		private bool _enableLavaMode;
 		private bool _enableWaterMode;
 		private string _ip;
-		//TODO assign this... please, so it doesnt keep popping up O_O
-#pragma warning disable 649
-		private bool _isAdmin;
-#pragma warning restore 649
+		private bool _isAdmin = false;
 		//private bool _isInvisible = false;
 		private bool _isLoading;
 		private bool _isLoggedIn;
@@ -369,194 +366,210 @@ namespace MCFrog
 			string[] command = message.Split(' ');
 			command[0] = command[0].Remove(0, 1).ToLower();
 
-			if (command[0] == "historymode")
+			string messageSend = "";
+			string[] parameters = new string[0];
+
+			string accessor = command[0].ToLower();
+			if(command.Length > 1)
 			{
-				_enableWaterMode = false;
-				_enableLavaMode = false;
-
-				_enableHistoryMode = !_enableHistoryMode;
-				SendMessage("History mode is " + _enableHistoryMode.ToString());
+				message = message.Substring(accessor.Length + 2);
+				parameters = message.Split(' ');
 			}
-			else if (command[0] == "water")
-			{
-				_enableHistoryMode = false;
-				_enableLavaMode = false;
 
-				_enableWaterMode = !_enableWaterMode;
-				SendMessage("Water mode is " + _enableWaterMode.ToString());
-			}
-			else if (command[0] == "lava")
-			{
-				_enableHistoryMode = false;
-				_enableWaterMode = false;
+			if (Commands.CommandHandler.Commands.ContainsKey(accessor))
+				Commands.CommandHandler.Commands[accessor].Use(this, parameters, messageSend);
+			else
+				SendMessage("Command " + accessor + " does not exist!");
 
-				_enableLavaMode = !_enableLavaMode;
-				SendMessage("Lava mode is " + _enableLavaMode.ToString());
-			}
-			else if (command[0] == "level" || command[0] == "levels")
-			{
-				if (command.Length == 1)
-				{
-					SendMessage("You are currently on: " + Level.Name);
-					SendMessage("Possible SubCommands:");
-					SendMessage("loaded");
-					SendMessage("new <name> (Size x,y,z) (type)");
-				}
-				else
-					switch (command[1].ToLower())
-					{
-						case "loaded":
-							SendMessage("Loaded Levels:");
-							foreach (Level l in LevelHandler.Levels.ToArray())
-							{
-								SendMessage(l.Name);
-							}
-							break;
-						case "new":
-							if (command.Length == 2)
-							{
-								SendMessage("You at least need to enter a name!");
-								return;
-							}
-							if (command.Length > 6 || (command.Length > 3 && command.Length != 6))
-							{
-								SendMessage("Incorrect number of variables!");
-								return;
-							}
-							if (command.Length == 6)
-							{
-								try
-								{
-									string levelName = command[2];
 
-									ushort levelSizeX = Convert.ToUInt16(command[3]);
-									ushort levelSizeY = Convert.ToUInt16(command[4]);
-									ushort levelSizeZ = Convert.ToUInt16(command[5]);
+			//if (command[0] == "historymode")
+			//{
+			//    _enableWaterMode = false;
+			//    _enableLavaMode = false;
 
-									Level l = Level.Find(levelName);
-									if (l != null)
-									{
-										SendMessage("The level: " + levelName + " is already loaded!");
-										return;
-									}
-									SendMessage("Generating new level: " + levelName);
-									l = new Level(levelName, levelSizeX, levelSizeY, levelSizeZ);
-									SendGlobalMessage("NEW LEVEL: " + l.Name);
-								}
-								catch
-								{
-									SendMessage("New level create failed!");
-								}
-							}
-							else
-							{
-								Level l = Level.Find(command[2]);
-								if (l != null)
-								{
-									SendMessage("The level: " + command[2] + " is already loaded!");
-									return;
-								}
-								SendMessage("Generating new level: " + command[2]);
-								l = new Level(command[2], 64, 64, 64);
+			//    _enableHistoryMode = !_enableHistoryMode;
+			//    SendMessage("History mode is " + _enableHistoryMode.ToString());
+			//}
+			//else if (command[0] == "water")
+			//{
+			//    _enableHistoryMode = false;
+			//    _enableLavaMode = false;
 
-								SendGlobalMessage("NEW LEVEL: " + l.Name);
-							}
-							break;
-						case "load":
-							if (command.Length == 2)
-							{
-								SendMessage("You at least need to enter a name!");
-							}
-							else
-							{
-								Level l = Level.Find(command[2]);
-								if (l != null)
-								{
-									SendMessage("The level: " + command[2] + " is already loaded!");
-									return;
-								}
-								SendMessage("Loading level: " + command[2]);
-								try
-								{
-									l = new Level(command[2], false);
-								}
-								catch (Exception e)
-								{
-									Console.WriteLine(e.Message);
-									SendMessage("Level load failed!");
-									return;
-								}
-								SendGlobalMessage("LOADED LEVEL: " + l.Name);
-							}
-							break;
-						case "unload":
-							if (command.Length == 1)
-							{
-								SendMessage("You have to enter a name!");
-							}
-							else
-							{
-								Level l = Level.Find(command[2]);
+			//    _enableWaterMode = !_enableWaterMode;
+			//    SendMessage("Water mode is " + _enableWaterMode.ToString());
+			//}
+			//else if (command[0] == "lava")
+			//{
+			//    _enableHistoryMode = false;
+			//    _enableWaterMode = false;
 
-								if (l == null)
-								{
-									SendMessage("Level not found!");
-									return;
-								}
-								if (l == LevelHandler.Lobby)
-								{
-									SendMessage("You cannot unload the lobby.");
-									return;
-								}
-								SendMessage("Unloading: " + l.Name);
-								l.Unload();
+			//    _enableLavaMode = !_enableLavaMode;
+			//    SendMessage("Lava mode is " + _enableLavaMode.ToString());
+			//}
+			//else if (command[0] == "level" || command[0] == "levels")
+			//{
+			//    if (command.Length == 1)
+			//    {
+			//        SendMessage("You are currently on: " + Level.Name);
+			//        SendMessage("Possible SubCommands:");
+			//        SendMessage("loaded");
+			//        SendMessage("new <name> (Size x,y,z) (type)");
+			//    }
+			//    else
+			//        switch (command[1].ToLower())
+			//        {
+			//            case "loaded":
+			//                SendMessage("Loaded Levels:");
+			//                foreach (Level l in LevelHandler.Levels.ToArray())
+			//                {
+			//                    SendMessage(l.Name);
+			//                }
+			//                break;
+			//            case "new":
+			//                if (command.Length == 2)
+			//                {
+			//                    SendMessage("You at least need to enter a name!");
+			//                    return;
+			//                }
+			//                if (command.Length > 6 || (command.Length > 3 && command.Length != 6))
+			//                {
+			//                    SendMessage("Incorrect number of variables!");
+			//                    return;
+			//                }
+			//                if (command.Length == 6)
+			//                {
+			//                    try
+			//                    {
+			//                        string levelName = command[2];
 
-								Server.HistoryController.SaveHistory(l.Name);
-								Server.HistoryController.UnloadHistory(l.Name);
+			//                        ushort levelSizeX = Convert.ToUInt16(command[3]);
+			//                        ushort levelSizeY = Convert.ToUInt16(command[4]);
+			//                        ushort levelSizeZ = Convert.ToUInt16(command[5]);
 
-								SendMessage("Done!");
-							}
-							break;
-					}
-			}
-			else if (command[0] == "goto")
-			{
-				if (command.Length == 1)
-				{
-					SendMessage("You have to enter a name to switch levels!");
-					return;
-				}
-				if (command.Length == 4)
-				{
-					try
-					{
-						ushort x = Convert.ToUInt16(command[1]);
-						ushort y = Convert.ToUInt16(command[1]);
-						ushort z = Convert.ToUInt16(command[1]);
+			//                        Level l = Level.Find(levelName);
+			//                        if (l != null)
+			//                        {
+			//                            SendMessage("The level: " + levelName + " is already loaded!");
+			//                            return;
+			//                        }
+			//                        SendMessage("Generating new level: " + levelName);
+			//                        l = new Level(levelName, levelSizeX, levelSizeY, levelSizeZ);
+			//                        SendGlobalMessage("NEW LEVEL: " + l.Name);
+			//                    }
+			//                    catch
+			//                    {
+			//                        SendMessage("New level create failed!");
+			//                    }
+			//                }
+			//                else
+			//                {
+			//                    Level l = Level.Find(command[2]);
+			//                    if (l != null)
+			//                    {
+			//                        SendMessage("The level: " + command[2] + " is already loaded!");
+			//                        return;
+			//                    }
+			//                    SendMessage("Generating new level: " + command[2]);
+			//                    l = new Level(command[2], 64, 64, 64);
 
-						var newPosition = new Pos {X = x, Y = y, Z = z, Yaw = 0, Pitch = 0};
+			//                    SendGlobalMessage("NEW LEVEL: " + l.Name);
+			//                }
+			//                break;
+			//            case "load":
+			//                if (command.Length == 2)
+			//                {
+			//                    SendMessage("You at least need to enter a name!");
+			//                }
+			//                else
+			//                {
+			//                    Level l = Level.Find(command[2]);
+			//                    if (l != null)
+			//                    {
+			//                        SendMessage("The level: " + command[2] + " is already loaded!");
+			//                        return;
+			//                    }
+			//                    SendMessage("Loading level: " + command[2]);
+			//                    try
+			//                    {
+			//                        l = new Level(command[2], false);
+			//                    }
+			//                    catch (Exception e)
+			//                    {
+			//                        Console.WriteLine(e.Message);
+			//                        SendMessage("Level load failed!");
+			//                        return;
+			//                    }
+			//                    SendGlobalMessage("LOADED LEVEL: " + l.Name);
+			//                }
+			//                break;
+			//            case "unload":
+			//                if (command.Length == 1)
+			//                {
+			//                    SendMessage("You have to enter a name!");
+			//                }
+			//                else
+			//                {
+			//                    Level l = Level.Find(command[2]);
 
-						SendTeleportThisPlayer(newPosition);
+			//                    if (l == null)
+			//                    {
+			//                        SendMessage("Level not found!");
+			//                        return;
+			//                    }
+			//                    if (l == LevelHandler.Lobby)
+			//                    {
+			//                        SendMessage("You cannot unload the lobby.");
+			//                        return;
+			//                    }
+			//                    SendMessage("Unloading: " + l.Name);
+			//                    l.Unload();
 
-						return;
-					}
-					catch
-					{
-						SendMessage("Goto Failed!");
-						return;
-					}
-				}
-				Level l = Level.Find(command[1]);
+			//                    Server.HistoryController.SaveHistory(l.Name);
+			//                    Server.HistoryController.UnloadHistory(l.Name);
 
-				if (l == null)
-				{
-					SendMessage("Level not found!");
-					return;
-				}
-				SwitchMap(l);
+			//                    SendMessage("Done!");
+			//                }
+			//                break;
+			//        }
+			//}
+			//else if (command[0] == "goto")
+			//{
+			//    if (command.Length == 1)
+			//    {
+			//        SendMessage("You have to enter a name to switch levels!");
+			//        return;
+			//    }
+			//    if (command.Length == 4)
+			//    {
+			//        try
+			//        {
+			//            ushort x = Convert.ToUInt16(command[1]);
+			//            ushort y = Convert.ToUInt16(command[1]);
+			//            ushort z = Convert.ToUInt16(command[1]);
 
-				SendMessage("You are now on: " + Level.Name);
-			}
+			//            var newPosition = new Pos {X = x, Y = y, Z = z, Yaw = 0, Pitch = 0};
+
+			//            SendTeleportThisPlayer(newPosition);
+
+			//            return;
+			//        }
+			//        catch
+			//        {
+			//            SendMessage("Goto Failed!");
+			//            return;
+			//        }
+			//    }
+			//    Level l = Level.Find(command[1]);
+
+			//    if (l == null)
+			//    {
+			//        SendMessage("Level not found!");
+			//        return;
+			//    }
+			//    SwitchMap(l);
+
+			//    SendMessage("You are now on: " + Level.Name);
+			//}
 		}
 
 		private void SendPacket(Packet p)
@@ -750,7 +763,7 @@ namespace MCFrog
 			}
 		}
 
-		internal void SendMessage(string message)
+		public void SendMessage(string message)
 		{
 			var packet = new Packet {Id = PacketType.Message};
 			packet.AddVar(UserId);

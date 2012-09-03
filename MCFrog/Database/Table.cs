@@ -77,6 +77,8 @@ namespace MCFrog.Database
 			_fileStream.Position = position;
 
 			_fileStream.Write(bytes, 0, _rowSize);
+
+			_fileStream.Flush();
 		}
 		public void UpdateItem(long id, byte columnNumber, object data)
 		{
@@ -90,6 +92,8 @@ namespace MCFrog.Database
 			_fileStream.Position = position;
 
 			_fileStream.Write(bytes, 0, database.GetSize(_dataTypes[columnNumber]));
+
+			_fileStream.Flush();
 		}
 
 		public object[] GetData(int id)
