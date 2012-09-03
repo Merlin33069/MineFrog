@@ -6,3 +6,4 @@ _ReSharper.MCFrog
 # mstest test results
 TestResults
 *.suo
+/MCFrog/Copy of Player.cs
