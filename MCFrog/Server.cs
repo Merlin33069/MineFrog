@@ -13,12 +13,14 @@ namespace MineFrog
 
 		public static HistoryController HistoryController;
 		public static DatabaseController DatabaseController;
+		public static HeartBeat.HeartBeat HeartBeat;
 		public static InputOutput inputOutput;
 
 		public static int Version = 4;
 		public DatabaseController DONOTUSEMEDatabaseControllerNS;
 		public HistoryController DONOTUSEMEHistoryControllerNS;
 		public InputOutput DONOTUSEMEInputOutputNS;
+		public HeartBeat.HeartBeat DONOTUSEMEHeartBeatNS;
 
 		public static Table users;
 		public static Table groups;
@@ -28,6 +30,7 @@ namespace MineFrog
 			inputOutput = DONOTUSEMEInputOutputNS;
 			HistoryController = DONOTUSEMEHistoryControllerNS;
 			DatabaseController = DONOTUSEMEDatabaseControllerNS;
+			HeartBeat = DONOTUSEMEHeartBeatNS;
 			InputOutput.InitLogTypes();
 			Block.Initialize();
 

@@ -9,6 +9,7 @@ using System.Text;
 using System.Threading;
 using MineFrog.History;
 using MineFrog.PreLoader;
+using System.Security.Cryptography;
 
 namespace MineFrog
 {
@@ -16,6 +17,7 @@ namespace MineFrog
 	{
 		private const byte ProtocolVersion = 0x07;
 		private static readonly ASCIIEncoding Asen = new ASCIIEncoding();
+		static MD5CryptoServiceProvider md5 = new MD5CryptoServiceProvider();
 
 		private readonly TcpClient _tcpClient;
 		public int UID = 0; //This is the users Unique ID for the whole server
@@ -222,9 +224,16 @@ namespace MineFrog
 			}
 
 			Username = Asen.GetString(data, 1, 64).Trim();
-			string hash = Asen.GetString(data, 65, 64).Trim();
+			string hash = Asen.GetString(data, 65, 32).Trim();
 			byte type = data[129];
 
+			if (string.IsNullOrWhiteSpace(hash) || hash == "--" || hash != BitConverter.ToString(md5.ComputeHash(Asen.GetBytes(Configuration.ServerSalt + Username))).Replace("-", "").ToLower().TrimStart('0'))
+			{
+				SendKick("Account could not be verified, try again.");
+				Server.Log(Server.HeartBeat._hash + "", LogTypesEnum.Debug);
+				Server.Log("'" + hash + "' != '" + BitConverter.ToString(md5.ComputeHash(Asen.GetBytes(Configuration.ServerSalt + Username))).Replace("-", "").ToLower().TrimStart('0') + "'", LogTypesEnum.Debug);
+				return;
+			}
 
 			pdb = PDB.Find(Username.Trim().ToLower());
 			if(pdb == null)

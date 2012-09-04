@@ -58,6 +58,7 @@ namespace LillyPad
 
 			_server.DONOTUSEMEHistoryControllerNS = _historyController;
 			_server.DONOTUSEMEDatabaseControllerNS = _databaseController;
+			_server.DONOTUSEMEHeartBeatNS = _heartBeater;
 			_server.Start();
 
 			//Server.StartInput();
