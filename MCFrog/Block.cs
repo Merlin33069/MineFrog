@@ -2,7 +2,7 @@
 
 namespace MineFrog
 {
-	internal enum Blocks : byte
+	public enum Blocks : byte
 	{
 		Air = 0,
 		Stone = 1,

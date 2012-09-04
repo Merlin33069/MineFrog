@@ -40,9 +40,9 @@ namespace MineFrog.Commands
 					{
 						if (pluginType.IsSubclassOf(typeof(CommandBase)) && pluginType.IsPublic && !pluginType.IsAbstract)
 						{
-							CommandBase command = (CommandBase)Activator.CreateInstance(pluginAssembly.GetType(pluginType.ToString()));
+							var command = (CommandBase)Activator.CreateInstance(pluginAssembly.GetType(pluginType.ToString()));
 							command.Initialize();
-							Server.Log("Found one :D", LogTypesEnum.Debug);
+							//Server.Log("Found one :D", LogTypesEnum.Debug);
 						}
 					}
 				}

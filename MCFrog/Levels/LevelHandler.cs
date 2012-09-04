@@ -22,7 +22,7 @@ namespace MineFrog
 		}
 		public void LevelSaveUpdateCheck()
 		{
-			Server.Log("Level save Update Check Timer called", LogTypesEnum.Debug);
+			//Server.Log("Level save Update Check Timer called", LogTypesEnum.Debug);
 			foreach (var level in Levels.ToArray())
 			{
 				level.SaveCheck();

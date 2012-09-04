@@ -12,29 +12,30 @@ namespace MineFrog.PreLoader
 	 * Current DB Structure for USERS table:
 	 * 
 	 * Name
-	 * NickName
-	 * IP
-	 * WarnLevel
-	 * Group
-	 * isFrozen
-	 * isMuted
+	 * GroupTag
+	 * GroupColor
+	 * PermissionLevel
+	 * isAdmin
+	 * canBuild
+	 * canChat
+	 * MaxBlockChange
 	 * 
 	 * What Else?
 	 */
 
-	class GDB : IComparable<GDB>
+	public class GDB : IComparable<GDB>
 	{
 		internal static Dictionary<string, GDB> Gdbs = new Dictionary<string, GDB>();
 
-		internal int GID;
-		internal string GroupName;
-		internal string GroupTag;
-		internal string GroupColor;
-		internal byte PermissionLevel;
-		internal bool isAdmin;
-		internal bool canBuild;
-		internal bool canChat;
-		internal int MaxBlockChange;
+		public int GID;
+		public string GroupName;
+		public string GroupTag;
+		public string GroupColor;
+		public byte PermissionLevel;
+		public bool isAdmin;
+		public bool canBuild;
+		public bool canChat;
+		public int MaxBlockChange;
 		
 
 		public int CompareTo(GDB compareMe)
@@ -42,7 +43,7 @@ namespace MineFrog.PreLoader
 			return String.Compare(GroupName, compareMe.GroupName, StringComparison.OrdinalIgnoreCase);
 		}
 
-		internal static GDB Find(string search)
+		public static GDB Find(string search)
 		{
 			foreach (GDB gdb in Gdbs.Values)
 			{
@@ -55,7 +56,7 @@ namespace MineFrog.PreLoader
 			return null;
 		}
 
-		internal static GDB Find(long search)
+		public static GDB Find(long search)
 		{
 			foreach (GDB gdb in Gdbs.Values)
 			{
@@ -82,9 +83,9 @@ namespace MineFrog.PreLoader
 			Gdbs.Add(GroupName, this);
 		}
 
-		internal void sync()
+		public void sync()
 		{
-			//Server.users.UpdateRow(UID, new object[] { Username, "", IP, WarningLevel, GroupID, isFrozen, isMuted });
+			Server.groups.UpdateRow(GID, new object[] { GroupName, GroupTag, GroupColor, PermissionLevel, isAdmin, canBuild, canChat, MaxBlockChange });
 		}
 	}
 }

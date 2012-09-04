@@ -60,8 +60,9 @@ namespace LillyPad
 			_server.DONOTUSEMEDatabaseControllerNS = _databaseController;
 			_server.Start();
 
-			Server.StartInput();
+			//Server.StartInput();
 
+			
 			#endregion
 
 		}

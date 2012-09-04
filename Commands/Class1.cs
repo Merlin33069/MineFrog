@@ -38,7 +38,7 @@ namespace Commands
 		{
 			p.SendMessage("You just used the command :D");
 		}
-		new public void Use(string[] s, string sy)
+		public override void Use(string[] s, string sy)
 		{
 			Server.Log("Overriding NON Abstract method seems to have worked!", LogTypesEnum.Info);
 		}
@@ -46,6 +46,10 @@ namespace Commands
 		public override void Help(Player p)
 		{
 			p.SendMessage("Your being helped alright....");
+		}
+		public override void Help()
+		{
+			
 		}
 	}
 }

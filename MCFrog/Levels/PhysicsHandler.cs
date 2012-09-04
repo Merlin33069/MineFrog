@@ -4,7 +4,7 @@ using System.Threading;
 
 namespace MineFrog
 {
-	internal class PhysicsHandler
+	public class PhysicsHandler
 	{
 		#region Delegates
 
@@ -13,20 +13,20 @@ namespace MineFrog
 		#endregion
 
 		public static Dictionary<byte, Del> PhysicsTypes = new Dictionary<byte, Del>();
-		private readonly Level _level;
+		public readonly Level _level;
 
 		public int ChecksPerTick = 20;
-		internal bool FiniteLiquids = true;
+		public bool FiniteLiquids = true;
 		public int Interval = 10;
 
-		internal bool IsEnabled = false; //Disabled by default
-		internal byte LavaCurrent = 4;
+		public bool IsEnabled = false; //Disabled by default
+		public byte LavaCurrent = 4;
 		public Dictionary<int, byte> OtherData = new Dictionary<int, byte>();
 		public List<int> PhysicsUpdates = new List<int>();
 
-		internal bool Realistic = true;
-		internal bool ShouldStop = false;
-		internal byte WaterCurrent = 7;
+		public bool Realistic = true;
+		public bool ShouldStop = false;
+		public byte WaterCurrent = 7;
 
 		internal PhysicsHandler(Level l, bool enabled)
 		{

@@ -22,26 +22,30 @@ namespace MineFrog.PreLoader
 	 * What Else?
 	 */ 
 	
-	class PDB : IComparable<PDB>
+	public class PDB : IComparable<PDB>
 	{
 		internal static Dictionary<string, PDB> Pdbs = new Dictionary<string, PDB>();  
 
-		internal int UID;
-		internal string Username;
-		internal string Nickname;
-		internal string IP;
-		internal byte WarningLevel;
-
-		internal int GroupID;
-		internal bool isFrozen;
-		internal bool isMuted;
+		public int UID;
+		public string Username;
+		public string _username
+		{
+			get { return Username; }
+		}
+		public string Nickname;
+		public string IP;
+		public byte WarningLevel;
+		public GDB Group;
+		public int GroupID;
+		public bool isFrozen;
+		public bool isMuted;
 
 		public int CompareTo(PDB compareMe)
 		{
 			return String.Compare(Username, compareMe.Username, StringComparison.OrdinalIgnoreCase);
 		}
 
-		internal static PDB Find(string search)
+		public static PDB Find(string search)
 		{
 			foreach (PDB pdb in Pdbs.Values)
 			{
@@ -53,7 +57,7 @@ namespace MineFrog.PreLoader
 			return null;
 		}
 
-		internal static PDB Find(long search)
+		public static PDB Find(long search)
 		{
 			foreach (PDB pdb in Pdbs.Values)
 			{
@@ -73,13 +77,23 @@ namespace MineFrog.PreLoader
 			IP = (string)data[2];
 			WarningLevel = (byte) data[3];
 			GroupID = (int)data[4];
+			Group = GDB.Find(GroupID);
 			isFrozen = (bool) data[5];
 			isMuted = (bool) data[6];
 
 			Pdbs.Add(Username, this);
+
+			if (Group == null)
+			{
+				Server.Log("Group with ID " + GroupID + " NOT FOUND, user " + Username + " being reverted to GUEST Status", LogTypesEnum.Error);
+				GroupID = 0;
+				Group = GDB.Find(0);
+
+				sync();
+			}
 		}
 
-		internal void sync()
+		public void sync()
 		{
 			Server.users.UpdateRow(UID, new object[] {Username, "", IP, WarningLevel, GroupID, isFrozen, isMuted});
 		}

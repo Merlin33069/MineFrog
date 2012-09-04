@@ -11,6 +11,8 @@ namespace MineFrog
 	{
 		public static InputOutput Instance;
 
+		private Server server;
+
 		public static Dictionary<LogTypesEnum, LogTypeClass> LogTypeList = new Dictionary<LogTypesEnum, LogTypeClass>();
 		public static string Messagepart = "";
 
@@ -99,11 +101,7 @@ namespace MineFrog
 				Commands.CommandHandler.Commands[accessor].Use(parameters, messageSend);
 			else
 			{
-				foreach (string S in Commands.CommandHandler.Commands.Keys)
-				{
-					Server.Log(S + "", LogTypesEnum.Info);
-				}
-				Server.Log("Commands cannot be used in the console at this time!", LogTypesEnum.Error);
+				Server.Log("Command Not Found!", LogTypesEnum.Error);
 			}
 
 			//TODO ?

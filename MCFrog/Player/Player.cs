@@ -8,6 +8,7 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using MineFrog.History;
+using MineFrog.PreLoader;
 
 namespace MineFrog
 {
@@ -17,21 +18,90 @@ namespace MineFrog
 		private static readonly ASCIIEncoding Asen = new ASCIIEncoding();
 
 		private readonly TcpClient _tcpClient;
-		internal int UID = 0; //This is the users Unique ID for the whole server
-		internal byte UserId = 101; //This is the users ID in the session
-		private bool _isDisconnected;
-		private Pos _delta;
-		private bool _enableHistoryMode;
-		private bool _enableLavaMode;
-		private bool _enableWaterMode;
-		private string _ip;
-		private bool _isAdmin = false;
-		//private bool _isInvisible = false;
-		private bool _isLoading;
-		private bool _isLoggedIn;
+		public int UID = 0; //This is the users Unique ID for the whole server
+		public byte UserId = 101; //This is the users ID in the session
+		public bool _isDisconnected;
+		public Pos _delta;
+		public bool _enableHistoryMode;
+		public bool _enableLavaMode;
+		public bool _enableWaterMode;
+		public string _ip;
 
-		internal Level Level = LevelHandler.Lobby;
-		internal Level OldLevel; //If not null represents the old level that this player was in
+		public bool IsAdmin
+		{
+			get { return gdb.isAdmin; }
+		}
+		public string Nickname
+		{
+			get
+			{
+				if (string.IsNullOrWhiteSpace(pdb.Nickname)) return Username;
+				else return pdb.Nickname;
+			}
+			set { pdb.Nickname = value; pdb.sync();}
+		}
+		public byte WarningLevel
+		{
+			get { return pdb.WarningLevel; }
+			set { pdb.WarningLevel = value; pdb.sync(); }
+		}
+		public bool IsFrozen
+		{
+			get { return pdb.isFrozen; }
+			set { pdb.isFrozen = value; }
+		}
+		public bool IsMuted
+		{
+			get { return pdb.isMuted || gdb.canChat; }
+			set { pdb.isMuted = value; }
+		}
+		
+		public byte PermissionLevel
+		{
+			get
+			{
+				//Server.Log(gdb.PermissionLevel + " wtf?", LogTypesEnum.Debug);
+				return gdb.PermissionLevel;
+			}
+		}
+		public bool canBuild
+		{
+			get { return gdb.canBuild; }
+		}
+		public int MaxBlockChange
+		{
+			get { return gdb.MaxBlockChange; }
+		}
+
+		public string Tag
+		{
+			get
+			{
+				return gdb.GroupColor + "" + gdb.GroupTag + MCColor.white + "" + Nickname;
+			}
+		}
+
+		//private bool _isInvisible = false;
+
+		public bool _isLoading;
+		public bool _isLoggedIn;
+
+		public PDB pdb;
+		public GDB gdb
+		{
+			get { return pdb.Group; }
+			set
+			{
+				pdb.Group = value;
+				pdb.GroupID = gdb.GID;
+				pdb.sync();
+			}
+		}
+
+
+
+		public Level Level = LevelHandler.Lobby;
+		public Level OldLevel; //If not null represents the old level that this player was in
 
 		public Pos OldPosition;
 		public Pos Position;
@@ -156,13 +226,12 @@ namespace MineFrog
 			byte type = data[129];
 
 
-			PreLoader.PDB pdb = PreLoader.PDB.Find(Username.Trim().ToLower());
+			pdb = PDB.Find(Username.Trim().ToLower());
 			if(pdb == null)
 			{
 				var dbData = new object[] {Username, "", _ip, (byte) 0, 0, false, false};
 				UID = Server.users.NewRow(dbData);
-				new PreLoader.PDB(UID, dbData);
-				Server.Log(UID + " is this players UID :D", LogTypesEnum.Debug);
+				pdb = new PDB(UID, dbData);
 			}
 			else
 			{
@@ -208,6 +277,11 @@ namespace MineFrog
 				HisData hD = Server.HistoryController.GetData(Level.Name, blockPos);
 				SendMessage("Type: " + hD.Type);
 				SendMessage("UID: " + hD.UID);
+				return;
+			}
+			if(PermissionLevel < Level.BuildPermissions)
+			{
+				SendBlockChange(x, y, z, Level.BlockData[blockPos]);
 				return;
 			}
 			if (_enableWaterMode)
@@ -377,7 +451,15 @@ namespace MineFrog
 			}
 
 			if (Commands.CommandHandler.Commands.ContainsKey(accessor))
-				Commands.CommandHandler.Commands[accessor].Use(this, parameters, messageSend);
+			{
+				Commands.CommandBase commandBase = Commands.CommandHandler.Commands[accessor];
+				if(PermissionLevel < commandBase.Permission)
+				{
+					SendMessage("You do not have permission to use that command!");
+				}
+				else commandBase.Use(this, parameters, messageSend);
+			}
+				
 			else
 				SendMessage("Command " + accessor + " does not exist!");
 
@@ -624,7 +706,7 @@ namespace MineFrog
 			p.AddVar(ProtocolVersion);
 			p.AddVar(name);
 			p.AddVar(motd);
-			p.AddVar((byte) (_isAdmin ? 100 : 0));
+			p.AddVar((byte) (IsAdmin ? 100 : 0));
 
 			Server.Log("Send MOTD", LogTypesEnum.Debug);
 			SendPacket(p);
@@ -691,7 +773,7 @@ namespace MineFrog
 
 			SendAllSpawns();
 
-			//SendTeleportThisPlayer(level.spawnPos);
+			SendTeleportThisPlayer(Level.SpawnPos);
 
 			Server.Log("map done", LogTypesEnum.Debug);
 		}
@@ -706,9 +788,7 @@ namespace MineFrog
 
 		internal static void SendGlobalChat(Player player, string message)
 		{
-			string username = player.Username;
-
-			string toSend = "<" + username + ">: " + message;
+			string toSend = player.Tag + ": " + message;
 
 			Server.Log("!" + toSend, LogTypesEnum.Chat);
 
@@ -727,9 +807,7 @@ namespace MineFrog
 
 		internal static void SendLevelChat(Player player, string message)
 		{
-			string username = player.Username;
-
-			string toSend = "<" + username + ">: " + message;
+			string toSend = player.Tag + ": " + message;
 
 			Server.Log("!" + toSend, LogTypesEnum.Chat);
 
@@ -916,6 +994,8 @@ namespace MineFrog
 			}
 			return 254;
 		}
+
+		
 	}
 
 	public class Packet

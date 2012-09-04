@@ -12,26 +12,29 @@ namespace MineFrog
 		private const string LevelFolder = "levels";
 		private const string CompressedExtension = ".LvC";
 		private const string BackupExtension = ".bak";
-		private const int HeaderSize = 80;
-		private readonly ASCIIEncoding _encode = new ASCIIEncoding();
+		private const int HeaderSize = 82;
+		private readonly ASCIIEncoding _encode= new ASCIIEncoding();
 		//private readonly FileStream _fileHandle;
-		internal byte[] BlockData;
-		internal bool IsUnloaded = false;
+		public byte[] BlockData;
+		public bool IsUnloaded = false;
 
-		internal string Name;
-		internal PhysicsHandler Physics;
-		internal List<Player> Players = new List<Player>();
-		internal ushort SizeX;
-		internal ushort SizeY;
-		internal ushort SizeZ;
+		public string Name;
+		public PhysicsHandler Physics;
+		public List<Player> Players = new List<Player>();
+		public ushort SizeX;
+		public ushort SizeY;
+		public ushort SizeZ;
 
 		internal int BlockChangeCount;
 		internal int UpdateCountToSave = 0; //This counts up to the frequency, so we know when to save :D
 		internal int UpdateCountSaveFrequency = 30; //Each update check is 10 seconds, so this is 5 mins
 
-		internal Pos SpawnPos;
+		internal byte VisitPermissions = 0;
+		internal byte BuildPermissions = 0;
 
-		internal Level(string fileName, bool shouldCreateIfNotExist)
+		public Pos SpawnPos;
+
+		public Level(string fileName, bool shouldCreateIfNotExist)
 		{
 			try
 			{
@@ -56,7 +59,7 @@ namespace MineFrog
 			UncompressAndCreateHandle();
 		}
 
-		internal Level(string name, ushort x, ushort y, ushort z)
+		public Level(string name, ushort x, ushort y, ushort z)
 		{
 			try
 			{
@@ -87,7 +90,7 @@ namespace MineFrog
 		{
 		}
 
-		private void Load(string name)
+		public void Load(string name)
 		{
 			string tempPath = LevelFolder + "/" + name + CompressedExtension;
 			if (!File.Exists(tempPath)) throw new FileNotFoundException("Could not find file!", tempPath);
@@ -112,7 +115,10 @@ namespace MineFrog
 			SpawnPos.Pitch = header[77];
 
 			bool physics = BitConverter.ToBoolean(header, 78);
-			bool realistic = BitConverter.ToBoolean(header, 78);
+			bool realistic = BitConverter.ToBoolean(header, 79);
+
+			BuildPermissions = header[80];
+			VisitPermissions = header[81];
 
 			Physics = new PhysicsHandler(this, physics) {Realistic = realistic};
 
@@ -126,7 +132,7 @@ namespace MineFrog
 			LevelHandler.Levels.Add(this);
 		}
 
-		private void Create(ushort inx, ushort iny, ushort inz) //todo add type
+		public void Create(ushort inx, ushort iny, ushort inz) //todo add type
 		{
 			SizeX = inx;
 			SizeY = iny;
@@ -167,7 +173,7 @@ namespace MineFrog
 			LevelHandler.Levels.Add(this);
 		}
 
-		internal void Unload()
+		public void Unload()
 		{
 			LevelHandler.Levels.Remove(this);
 
@@ -191,7 +197,7 @@ namespace MineFrog
 			BlockData = new byte[0];
 		}
 
-		internal void FullSave()
+		public void FullSave()
 		{
 			/*
 			 * All we need to do here is dump our level blocks to the file
@@ -226,6 +232,8 @@ namespace MineFrog
 			gzipStream.WriteByte(SpawnPos.Yaw);
 			gzipStream.Write(BitConverter.GetBytes(Physics.IsEnabled), 0, 1);
 			gzipStream.Write(BitConverter.GetBytes(Physics.Realistic), 0, 1);
+			gzipStream.WriteByte(BuildPermissions);
+			gzipStream.WriteByte(VisitPermissions);
 
 			gzipStream.Write(BlockData, 0, BlockData.Length);
 
@@ -253,7 +261,7 @@ namespace MineFrog
 				Directory.CreateDirectory(LevelFolder);
 		}
 
-		internal bool SetTile(ushort x, ushort y, ushort z, byte type)
+		public bool SetTile(ushort x, ushort y, ushort z, byte type)
 		{
 			if (NotInBounds(x, y, z))
 			{
@@ -270,7 +278,7 @@ namespace MineFrog
 			return true;
 		}
 
-		internal void PhysicsCheck(ushort inX, ushort inY, ushort inZ)
+		public void PhysicsCheck(ushort inX, ushort inY, ushort inZ)
 		{
 			for (int x = -1; x < 2; ++x)
 				for (int y = -1; y < 2; ++y)
@@ -286,7 +294,7 @@ namespace MineFrog
 					}
 		}
 
-		internal bool BlockChange(ushort x, ushort y, ushort z, byte type)
+		public bool BlockChange(ushort x, ushort y, ushort z, byte type)
 		{
 			if (SetTile(x, y, z, type))
 			{
@@ -341,12 +349,12 @@ namespace MineFrog
 			return false;
 		}
 
-		internal bool PhysicsBlockChange(BlockPos pos, Blocks type)
+		public bool PhysicsBlockChange(BlockPos pos, Blocks type)
 		{
 			return PhysicsBlockChange(pos, (byte) type);
 		}
 
-		internal byte GetTile(ushort x, ushort y, ushort z)
+		public byte GetTile(ushort x, ushort y, ushort z)
 		{
 			if (NotInBounds(x, y, z))
 			{
@@ -356,12 +364,12 @@ namespace MineFrog
 			return BlockData[PosToInt(x, y, z)];
 		}
 
-		internal Blocks GetTile(BlockPos pos)
+		public Blocks GetTile(BlockPos pos)
 		{
 			return (Blocks) GetTile(pos.X, pos.Y, pos.Z);
 		}
 
-		internal Blocks GetTile(BlockPos pos, int diffX, int diffY, int diffZ)
+		public Blocks GetTile(BlockPos pos, int diffX, int diffY, int diffZ)
 		{
 			var x = (ushort) (pos.X + diffX);
 			var y = (ushort) (pos.Y + diffY);
@@ -418,19 +426,19 @@ namespace MineFrog
 			return pos + x + z*SizeX + y*SizeX*SizeZ;
 		}
 
-		internal static Level Find(string name)
+		public static Level Find(string name)
 		{
 			return LevelHandler.Levels.ToArray().FirstOrDefault(l => l.Name == name);
 		}
 
 		internal void SaveCheck()
 		{
-			Server.Log("Checking if level should save " + Name, LogTypesEnum.Debug);
+			//Server.Log("Checking if level should save " + Name, LogTypesEnum.Debug);
 			UpdateCountToSave++;
 
 			if (UpdateCountToSave >= UpdateCountSaveFrequency || BlockChangeCount >= 1000)
 			{
-				Server.Log("Saving Level: " + Name, LogTypesEnum.Debug);
+				Player.SendGlobalMessage("Saving Level: " + Name);
 				FullSave();
 
 				UpdateCountToSave = 0;

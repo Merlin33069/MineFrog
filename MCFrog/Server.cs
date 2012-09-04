@@ -13,15 +13,19 @@ namespace MineFrog
 
 		public static HistoryController HistoryController;
 		public static DatabaseController DatabaseController;
+		public static InputOutput inputOutput;
 
 		public static int Version = 4;
 		public DatabaseController DONOTUSEMEDatabaseControllerNS;
 		public HistoryController DONOTUSEMEHistoryControllerNS;
+		public InputOutput DONOTUSEMEInputOutputNS;
 
 		public static Table users;
+		public static Table groups;
 
 		public void Start()
 		{
+			inputOutput = DONOTUSEMEInputOutputNS;
 			HistoryController = DONOTUSEMEHistoryControllerNS;
 			DatabaseController = DONOTUSEMEDatabaseControllerNS;
 			InputOutput.InitLogTypes();
@@ -44,42 +48,75 @@ namespace MineFrog
 				Console.WriteLine(e.Message);
 				Console.WriteLine(e.StackTrace);
 			}
-			//new TestClass();
+			
+			StartInput();
 		}
 
-		/*
-		 * Name
-		 * NickName
-		 * IP
-		 * WarnLevel
-		 * Group
-		 * isFrozen
-		 * isMuted
-		 * 
-		 * What Else?
-		 */
 		void CheckDatabaseTables()
+		{
+			CheckGroups();
+			CheckUsers();
+		}
+
+		void CheckUsers()
 		{
 			if (!DatabaseController.TableExists("users"))
 			{
-				Server.Log("Table No Exists", LogTypesEnum.Debug);
-				DatabaseController.CreateNewTable("users", new DataTypes[] { DataTypes.Name, DataTypes.Message, DataTypes.Name, DataTypes.Byte, DataTypes.Int, DataTypes.Bool, DataTypes.Bool });
+				//Server.Log("Table No Exists", LogTypesEnum.Debug);
+				DatabaseController.CreateNewTable("users", new[] { DataTypes.Name, DataTypes.Message, DataTypes.Name, DataTypes.Byte, DataTypes.Int, DataTypes.Bool, DataTypes.Bool });
 			}
-			if(!DatabaseController.TableExists("users"))
+			if (!DatabaseController.TableExists("users"))
 			{
-				Server.Log("TABLE (yuno) YUNO BE MADE?", LogTypesEnum.Error);
-				return;
+				throw new NullReferenceException("Table USERS creation FAILED!");
 			}
 
 			users = DatabaseController.FindTable("users");
 
-			Console.WriteLine("test-1");
-			for(int i = 0;i<users.RowCount;++i)
+			for (int i = 0; i < users.RowCount; ++i)
 			{
-				Server.Log("Loading PDB #" + i, LogTypesEnum.Debug);
+				//Server.Log("Loading PDB #" + i, LogTypesEnum.Debug);
 				new PreLoader.PDB(i, users.GetData(i));
 			}
+		}
+		void CheckGroups()
+		{
+			if (!DatabaseController.TableExists("groups"))
+			{
+				//Server.Log("Table No Exists", LogTypesEnum.Debug);
+				DatabaseController.CreateNewTable("groups", new[] { DataTypes.Name, DataTypes.Message, DataTypes.Name, DataTypes.Byte, DataTypes.Bool, DataTypes.Bool, DataTypes.Bool, DataTypes.Int});
+			}
+			if (!DatabaseController.TableExists("groups"))
+			{
+				throw new NullReferenceException("Table GROUPS creation FAILED!");
+			}
 
+			groups = DatabaseController.FindTable("groups");
+
+			if(groups.RowCount == 0)
+			{
+				InitializeBaseGroups();
+			}
+
+			for (int i = 0; i < groups.RowCount; ++i)
+			{
+				//Server.Log("Loading GDB #" + i, LogTypesEnum.Debug);
+				new PreLoader.GDB(i, groups.GetData(i));
+			}
+		}
+
+		void InitializeBaseGroups()
+		{
+			var dbData = new object[] { "Guest", "<GUEST>", MCColor.white, (byte)0, false, true, true, 1000 };
+			Server.groups.NewRow(dbData);
+
+			dbData = new object[] { "Builder", "<BLDR>", MCColor.lime, (byte)50, false, true, true, 1000 };
+			Server.groups.NewRow(dbData);
+
+			dbData = new object[] { "OP", "<OP>", MCColor.teal, (byte)100, true, true, true, 5000 };
+			Server.groups.NewRow(dbData);
+
+			dbData = new object[] { "Owner", "<OWNER>", MCColor.gold, (byte)200, true, true, true, 10000 };
+			Server.groups.NewRow(dbData);
 		}
 
 		private void StartConnectionHandler()

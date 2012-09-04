@@ -48,10 +48,7 @@ namespace MineFrog.Commands
 		/// </summary>
 		/// <param name="parameters">The parameters (as strings) that the player entered for your command, for example if a player entered "/say hello there" than this string[] would contain two strings, "hello" and "there", if you need chat messages you can more easily get them by using the fullcommand parameter</param>
 		/// <param name="fullCommand">This is the full command (without the actual command accessor) that the player used, you can use this to get chat messages if you need to, to get parameters it is suggester you use the parameter parameter (lolwut)</param>
-		public void Use(string[] parameters, string fullCommand)
-		{
-			Server.Log(Name + " cannot be used from the console!", LogTypesEnum.Error);
-		}
+		public abstract void Use(string[] parameters, string fullCommand);
 
 		/// <summary>
 		/// This method is called when a player uses /Help *Command*
@@ -61,16 +58,17 @@ namespace MineFrog.Commands
 		/// <summary>
 		/// This method is called when /help is used on your command by the console.
 		/// </summary>
-		public void Help()
-		{
-			Server.Log(Name + " cannot be used from the console!", LogTypesEnum.Error);
-		}
+		public abstract void Help();
 
 		public void Initialize()
 		{
 			foreach (var accessor in Accessors)
 			{
-				if (CommandHandler.Commands.ContainsKey(accessor)) continue;
+				if (CommandHandler.Commands.ContainsKey(accessor.ToLower()))
+				{
+					continue;
+				}
+
 				CommandHandler.Commands.Add(accessor.ToLower(), this);
 
 				Server.Log(accessor + " added for command " + Name, LogTypesEnum.Debug);
