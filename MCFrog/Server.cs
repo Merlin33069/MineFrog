@@ -63,7 +63,7 @@ namespace MCFrog
 			if (!DatabaseController.TableExists("users"))
 			{
 				Server.Log("Table No Exists", LogTypesEnum.Debug);
-				DatabaseController.CreateNewTable("users", new DataTypes[] { DataTypes.Name, DataTypes.Message, DataTypes.Name, DataTypes.Byte, DataTypes.Byte, DataTypes.Bool, DataTypes.Bool });
+				DatabaseController.CreateNewTable("users", new DataTypes[] { DataTypes.Name, DataTypes.Message, DataTypes.Name, DataTypes.Byte, DataTypes.Int, DataTypes.Bool, DataTypes.Bool });
 			}
 			if(!DatabaseController.TableExists("users"))
 			{

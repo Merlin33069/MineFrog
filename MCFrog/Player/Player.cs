@@ -159,7 +159,7 @@ namespace MCFrog
 			PreLoader.PDB pdb = PreLoader.PDB.Find(Username.Trim().ToLower());
 			if(pdb == null)
 			{
-				var dbData = new object[] {Username, "", _ip, (byte) 0, (byte) 0, false, false};
+				var dbData = new object[] {Username, "", _ip, (byte) 0, 0, false, false};
 				UID = Server.users.NewRow(dbData);
 				new PreLoader.PDB(UID, dbData);
 				Server.Log(UID + " is this players UID :D", LogTypesEnum.Debug);

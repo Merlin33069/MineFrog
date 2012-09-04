@@ -31,20 +31,21 @@ namespace MCFrog.PreLoader
 		internal string Nickname;
 		internal string IP;
 		internal byte WarningLevel;
-		internal byte Group;
+
+		internal int GroupID;
 		internal bool isFrozen;
 		internal bool isMuted;
 
 		public int CompareTo(PDB compareMe)
 		{
-			return String.Compare(Username, compareMe.Username, StringComparison.Ordinal);
+			return String.Compare(Username, compareMe.Username, StringComparison.OrdinalIgnoreCase);
 		}
 
 		internal static PDB Find(string search)
 		{
 			foreach (PDB pdb in Pdbs.Values)
 			{
-				if (pdb.Username == search.Trim().ToLower() || pdb.IP == search)
+				if (string.Equals(pdb.Username.Trim(), search.Trim(), StringComparison.OrdinalIgnoreCase))
 				{
 					return pdb;
 				}
@@ -71,7 +72,7 @@ namespace MCFrog.PreLoader
 			Nickname = (string) data[1];
 			IP = (string)data[2];
 			WarningLevel = (byte) data[3];
-			Group = (byte) data[4];
+			GroupID = (int)data[4];
 			isFrozen = (bool) data[5];
 			isMuted = (bool) data[6];
 
@@ -80,7 +81,7 @@ namespace MCFrog.PreLoader
 
 		internal void sync()
 		{
-
+			Server.users.UpdateRow(UID, new object[] {Username, "", IP, WarningLevel, GroupID, isFrozen, isMuted});
 		}
 	}
 }
