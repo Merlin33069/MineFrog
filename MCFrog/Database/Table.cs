@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
 
-namespace MCFrog.Database
+namespace MineFrog.Database
 {
 	[Serializable]
 	public class Table

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections;
 
-namespace MCFrog
+namespace MineFrog
 {
 	internal class TestClass
 	{

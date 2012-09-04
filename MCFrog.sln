@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MCFrog", "MCFrog\MCFrog.csproj", "{ACD45752-FD96-4AC4-82C3-A0ED8B020350}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MineFrog", "MCFrog\MineFrog.csproj", "{ACD45752-FD96-4AC4-82C3-A0ED8B020350}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StartConsole", "StartConsole\StartConsole.csproj", "{EBFD7F93-80AA-49B5-B6B8-24ED4C6BDB02}"
 EndProject

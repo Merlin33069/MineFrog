@@ -5,7 +5,7 @@ using System.Globalization;
 
 //TODO Setup the TYPES of logging to be static, so that I can use them in other subsystems.
 
-namespace MCFrog
+namespace MineFrog
 {
 	public class InputOutput
 	{

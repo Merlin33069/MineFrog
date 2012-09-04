@@ -7,7 +7,7 @@ using System.IO;
 using System.Threading;
 using System.Net.Sockets;
 
-namespace MCFrog.HeartBeat
+namespace MineFrog.HeartBeat
 {
 	class PortWorkAround
 	{

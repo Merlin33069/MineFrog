@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Threading;
 
-namespace MCFrog
+namespace MineFrog
 {
 	internal class PhysicsHandler
 	{

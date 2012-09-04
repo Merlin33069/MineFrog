@@ -1,4 +1,4 @@
-﻿namespace MCFrog
+﻿namespace MineFrog
 {
 	static class Configuration
 	{

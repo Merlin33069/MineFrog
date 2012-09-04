@@ -1,8 +1,8 @@
 ﻿using System;
-using MCFrog;
-using MCFrog.Database;
-using MCFrog.HeartBeat;
-using MCFrog.History;
+using MineFrog;
+using MineFrog.Database;
+using MineFrog.HeartBeat;
+using MineFrog.History;
 
 namespace LillyPad
 {
@@ -34,18 +34,18 @@ namespace LillyPad
 			_historyAppDomain = AppDomain.CreateDomain("History_AppDomain");
 			Type t = typeof (HistoryController);
 			if (t.FullName != null)
-				_historyController = (HistoryController) _historyAppDomain.CreateInstanceAndUnwrap("MCFrog", t.FullName);
+				_historyController = (HistoryController) _historyAppDomain.CreateInstanceAndUnwrap("MineFrog", t.FullName);
 
 			_databaseAppDomain = AppDomain.CreateDomain("Database_AppDomain");
 			t = typeof (DatabaseController);
 			if (t.FullName != null)
 				_databaseController =
-					(DatabaseController) _databaseAppDomain.CreateInstanceAndUnwrap("MCFrog", t.FullName);
+					(DatabaseController)_databaseAppDomain.CreateInstanceAndUnwrap("MineFrog", t.FullName);
 
 			_heartBeatDomain = AppDomain.CreateDomain("HeartBeat_AppDomain");
 			t = typeof (HeartBeat);
 			if (t.FullName != null)
-				_heartBeater = (HeartBeat) _historyAppDomain.CreateInstanceAndUnwrap("MCFrog", t.FullName);
+				_heartBeater = (HeartBeat)_historyAppDomain.CreateInstanceAndUnwrap("MineFrog", t.FullName);
 
 			Server.Log("Starting Server SybSystems...", LogTypesEnum.System);
 
@@ -54,7 +54,7 @@ namespace LillyPad
 			_serverDomain = AppDomain.CreateDomain("Server_AppDomain");
 			t = typeof (Server);
 			if (t.FullName != null)
-				_server = (Server) _serverDomain.CreateInstanceAndUnwrap("MCFrog", t.FullName);
+				_server = (Server) _serverDomain.CreateInstanceAndUnwrap("MineFrog", t.FullName);
 
 			_server.DONOTUSEMEHistoryControllerNS = _historyController;
 			_server.DONOTUSEMEDatabaseControllerNS = _databaseController;

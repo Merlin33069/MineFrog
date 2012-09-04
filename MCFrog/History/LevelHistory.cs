@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace MCFrog.History
+namespace MineFrog.History
 {
 	class LevelHistory
 	{

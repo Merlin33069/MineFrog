@@ -2,8 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using MCFrog;
-using MCFrog.Commands;
+using MineFrog;
+using MineFrog.Commands;
 
 namespace Commands
 {

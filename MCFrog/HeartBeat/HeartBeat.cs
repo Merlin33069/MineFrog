@@ -3,7 +3,7 @@ using System.Text;
 using System.Net;
 using System.IO;
 
-namespace MCFrog.HeartBeat
+namespace MineFrog.HeartBeat
 {
 	public class HeartBeat : MarshalByRefObject
 	{

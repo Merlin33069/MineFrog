@@ -8,8 +8,8 @@
     <ProjectGuid>{ACD45752-FD96-4AC4-82C3-A0ED8B020350}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>MCFrog</RootNamespace>
-    <AssemblyName>MCFrog</AssemblyName>
+    <RootNamespace>MineFrog</RootNamespace>
+    <AssemblyName>MineFrog</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <TargetFrameworkProfile>Client</TargetFrameworkProfile>
     <FileAlignment>512</FileAlignment>

@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Threading;
-using MCFrog.Database;
-using MCFrog.History;
+using MineFrog.Database;
+using MineFrog.History;
 
-namespace MCFrog
+namespace MineFrog
 {
 	public class Server : MarshalByRefObject
 	{

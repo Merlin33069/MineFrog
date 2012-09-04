@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace MCFrog.Commands
+namespace MineFrog.Commands
 {
 	public abstract class CommandBase
 	{

@@ -2,7 +2,7 @@
 using System.Diagnostics;
 using System.Threading;
 
-namespace MCFrog
+namespace MineFrog
 {
 	internal class PerformanceMonitor
 	{

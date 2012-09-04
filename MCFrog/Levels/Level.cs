@@ -5,7 +5,7 @@ using System.IO.Compression;
 using System.Linq;
 using System.Text;
 
-namespace MCFrog
+namespace MineFrog
 {
 	public class Level
 	{

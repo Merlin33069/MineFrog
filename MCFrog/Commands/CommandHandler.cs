@@ -5,7 +5,7 @@ using System.Reflection;
 using System.Text;
 using System.IO;
 
-namespace MCFrog.Commands
+namespace MineFrog.Commands
 {
 	internal class CommandHandler
 	{

@@ -7,9 +7,9 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
-using MCFrog.History;
+using MineFrog.History;
 
-namespace MCFrog
+namespace MineFrog
 {
 	public class Player
 	{

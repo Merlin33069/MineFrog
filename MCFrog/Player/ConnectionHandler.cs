@@ -2,7 +2,7 @@
 using System.Net;
 using System.Net.Sockets;
 
-namespace MCFrog
+namespace MineFrog
 {
 	public class ConnectionHandler
 	{

@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace MCFrog.Database
+namespace MineFrog.Database
 {
 	public class DatabaseController : MarshalByRefObject
 	{

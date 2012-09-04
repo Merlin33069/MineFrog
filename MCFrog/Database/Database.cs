@@ -4,7 +4,7 @@ using System.Data;
 using System.IO;
 using System.Text;
 
-namespace MCFrog.Database
+namespace MineFrog.Database
 {
 	//STATIC IS BAD
 [Serializable]
