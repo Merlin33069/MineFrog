@@ -11,7 +11,7 @@ namespace MineFrog.History
 		}
 
 		readonly Dictionary<string, LevelHistory> _loadedHistories = new Dictionary<string, LevelHistory>();
-		readonly HisData _empty = new HisData { Empty = true };
+		readonly HisData _empty = new HisData { UID = int.MaxValue, Empty = true };
 
 		public void LoadHistory(string levelName)
 		{

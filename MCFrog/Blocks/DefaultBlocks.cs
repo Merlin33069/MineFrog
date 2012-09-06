@@ -1105,4 +1105,20 @@ namespace MineFrog.Blocks
 			get { return 49; }
 		}
 	}
+
+	public class Zero : Block
+	{
+		public override string Name
+		{
+			get { return "Zero"; }
+		}
+		public override byte ThisID
+		{
+			get { return 255; }
+		}
+		public override byte BaseType
+		{
+			get { return 0; }
+		}
+	}
 }

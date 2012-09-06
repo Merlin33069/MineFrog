@@ -40,9 +40,11 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CmdSave.cs" />
     <Compile Include="CmdWater.cs" />
-    <Compile Include="Lava.cs" />
-    <Compile Include="SetRank.cs" />
+    <Compile Include="CmdLava.cs" />
+    <Compile Include="CmdSetRank.cs" />
+    <Compile Include="CmdHistory.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

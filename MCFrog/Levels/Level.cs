@@ -445,6 +445,7 @@ namespace MineFrog
 				BlockChangeCount = 0;
 			}
 		}
+
 	}
 
 	public struct BlockPos

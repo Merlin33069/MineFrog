@@ -284,9 +284,18 @@ namespace MineFrog
 			if (_enableHistoryMode)
 			{
 				SendBlockChange(x, y, z, oldBlock);
-				HisData hD = Server.HistoryController.GetData(Level.Name, blockPos);
-				SendMessage("Type: " + hD.Type);
-				SendMessage("UID: " + hD.UID);
+				var hD = Server.HistoryController.GetData(Level.Name, blockPos);
+				var playername = "Unknown";
+				var oldName = "Unknown";
+				var currentName = "Unknown";
+
+				if (Block.Blocks.ContainsKey(oldBlock)) currentName = Block.Blocks[oldBlock].Name;
+				if (Block.Blocks.ContainsKey(hD.Type)) oldName = Block.Blocks[hD.Type].Name;
+				if (hD.UID != int.MaxValue) playername = PDB.Find(hD.UID).Username;
+				
+				SendMessage("CurrentType: " + currentName);
+				SendMessage("OldType: " + oldName);
+				SendMessage("Editor: " + playername);
 				return;
 			}
 			if(PermissionLevel < Level.BuildPermissions)
@@ -947,7 +956,7 @@ namespace MineFrog
 			p.AddVar(x);
 			p.AddVar(y);
 			p.AddVar(z);
-			p.AddVar(type);
+			p.AddVar((Block.Blocks.ContainsKey(type) ? Block.Blocks[type].BaseType : (byte)0));
 			SendPacket(p);
 		}
 
@@ -963,7 +972,27 @@ namespace MineFrog
 			var ms = new MemoryStream();
 			var gs = new GZipStream(ms, CompressionMode.Compress, true);
 			gs.Write(mapSize, 0, mapSize.Length);
-			gs.Write(levelData, 0, levelData.Length);
+			//gs.Write(levelData, 0, levelData.Length);
+
+			int currentstart = 0;
+
+			for (int i = 0; i < levelData.Length; i++ )
+			{
+				byte block = levelData[i];
+				if(block>49)
+				{
+					if(i>0) gs.Write(levelData, currentstart, (i-currentstart));
+					currentstart = i + 1;
+
+					gs.WriteByte((Block.Blocks.ContainsKey(block) ? Block.Blocks[block].BaseType : (byte)0));
+				}
+				
+			}
+
+			if (currentstart != levelData.Length)
+			{
+				gs.Write(levelData, currentstart, (levelData.Length - currentstart));
+			}
 
 			gs.Flush();
 			gs.Dispose();
@@ -1054,21 +1083,21 @@ namespace MineFrog
 			}
 		}
 
-		internal void Gzip()
-		{
-			var ms = new MemoryStream();
-			var gs = new GZipStream(ms, CompressionMode.Compress, true);
-			gs.Write(Bytes.ToArray(), 0, Bytes.Count);
-			gs.Close();
-			gs.Dispose();
-			ms.Position = 0;
-			Bytes.Clear();
-			var buffer = new byte[ms.Length];
-			ms.Read(buffer, 0, (int) ms.Length);
-			ms.Close();
-			ms.Dispose();
-			Bytes.AddRange(buffer);
-		}
+		//internal void Gzip()
+		//{
+		//    var ms = new MemoryStream();
+		//    var gs = new GZipStream(ms, CompressionMode.Compress, true);
+		//    gs.Write(Bytes.ToArray(), 0, Bytes.Count);
+		//    gs.Close();
+		//    gs.Dispose();
+		//    ms.Position = 0;
+		//    Bytes.Clear();
+		//    var buffer = new byte[ms.Length];
+		//    ms.Read(buffer, 0, (int) ms.Length);
+		//    ms.Close();
+		//    ms.Dispose();
+		//    Bytes.AddRange(buffer);
+		//}
 
 		//Misc Methods
 		private IEnumerable<byte> HTNO(short x)
