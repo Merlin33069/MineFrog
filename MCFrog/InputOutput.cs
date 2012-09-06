@@ -83,8 +83,6 @@ namespace MineFrog
 
 		private static void HandleCommand(string message)
 		{
-			//Shit!
-
 			string[] command = message.Split(' ');
 			
 			string messageSend = "";
@@ -98,13 +96,11 @@ namespace MineFrog
 			}
 
 			if (Commands.CommandHandler.Commands.ContainsKey(accessor))
-				Commands.CommandHandler.Commands[accessor].Use(parameters, messageSend);
+				Commands.CommandHandler.Commands[accessor].ConsoleUse(parameters, messageSend);
 			else
 			{
 				Server.Log("Command Not Found!", LogTypesEnum.Error);
 			}
-
-			//TODO ?
 		}
 
 		public static void InitLogTypes()

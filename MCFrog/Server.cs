@@ -32,12 +32,10 @@ namespace MineFrog
 			DatabaseController = DONOTUSEMEDatabaseControllerNS;
 			HeartBeat = DONOTUSEMEHeartBeatNS;
 			InputOutput.InitLogTypes();
-			Block.Initialize();
+			Block.LoadBlocks();
 
 			try
 			{
-				PhysicsHandler.LoadPhysicsTypes();
-
 				new Thread(StartConnectionHandler).Start();
 				new Thread(StartPlayerHandler).Start();
 				new Thread(StartLevelHandler).Start();

@@ -14,10 +14,6 @@ namespace MineFrog.Commands
 		internal CommandHandler()
 		{
 			LoadCommands();
-
-			//TODO initialize commands!
-			//CommandTest CT = new CommandTest();
-			//CT.Initialize();
 		}
 
 		internal void LoadCommands()

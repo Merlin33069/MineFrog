@@ -34,15 +34,11 @@ namespace Commands
 			get { return new[] { "Setrank" }; }
 		}
 
-		public override void Use(Player p, string[] s, string sy)
-		{
-			p.SendMessage("NYI Ingame, please use from the console for now!");
-		}
-		public override void Use(string[] s, string sy)
+		public override void ConsoleUse(string[] s, string sy)
 		{
 			if (s.Length != 2)
 			{
-				Help();
+				ConsoleHelp();
 				return;
 			}
 			MineFrog.PreLoader.PDB pdb = PlayerHandler.Find(s[0]);
@@ -58,11 +54,7 @@ namespace Commands
 			Server.Log(pdb._username + "'s rank has been set to " + gdb.GroupName, LogTypesEnum.Info);
 		}
 
-		public override void Help(Player p)
-		{
-			p.SendMessage("NYI Ingame, please use through console for now!");
-		}
-		public override void Help()
+		public override void ConsoleHelp()
 		{
 			Server.Log("SetRank - Usage: Setrank Merlin33069 owner", LogTypesEnum.Info);
 		}

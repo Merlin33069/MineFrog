@@ -57,7 +57,9 @@ namespace MineFrog
 			get { return pdb.isMuted || gdb.canChat; }
 			set { pdb.isMuted = value; }
 		}
-		
+
+		//TODO BlockChange System for Commands!
+
 		public byte PermissionLevel
 		{
 			get
@@ -83,7 +85,7 @@ namespace MineFrog
 			}
 		}
 
-		//private bool _isInvisible = false;
+		private bool _isInvisible = false;
 
 		public bool _isLoading;
 		public bool _isLoggedIn;
@@ -99,8 +101,6 @@ namespace MineFrog
 				pdb.sync();
 			}
 		}
-
-
 
 		public Level Level = LevelHandler.Lobby;
 		public Level OldLevel; //If not null represents the old level that this player was in
@@ -279,10 +279,11 @@ namespace MineFrog
 			byte incomingType = data[7];
 
 			int blockPos = Level.PosToInt(x, y, z);
+			byte oldBlock = Level.BlockData[blockPos];
 
 			if (_enableHistoryMode)
 			{
-				SendBlockChange(x, y, z, Level.BlockData[blockPos]);
+				SendBlockChange(x, y, z, oldBlock);
 				HisData hD = Server.HistoryController.GetData(Level.Name, blockPos);
 				SendMessage("Type: " + hD.Type);
 				SendMessage("UID: " + hD.UID);
@@ -290,41 +291,29 @@ namespace MineFrog
 			}
 			if(PermissionLevel < Level.BuildPermissions)
 			{
-				SendBlockChange(x, y, z, Level.BlockData[blockPos]);
+				SendBlockChange(x, y, z, oldBlock);
 				return;
 			}
 			if (_enableWaterMode)
 			{
-				Level.PlayerBlockChange(this, x, y, z, (byte) Blocks.Water);
+				Level.PlayerBlockChange(this, x, y, z, (byte) MCBlocks.Water);
 				return;
 			}
 			if (_enableLavaMode)
 			{
-				Level.PlayerBlockChange(this, x, y, z, (byte) Blocks.Lava);
+				Level.PlayerBlockChange(this, x, y, z, (byte) MCBlocks.Lava);
 				return;
 			}
 
 			if (isPlacing)
 			{
 				Level.PlayerBlockChange(this, x, y, z, incomingType);
-
-				//if (!level.physics.PhysicsUpdates.Contains(blockPos))
-				//{
-				//	//Server.Log("adding to physics list", LogTypesEnum.debug);
-				//	level.physics.PhysicsUpdates.Add(blockPos);
-				//}
-
-				//Check the block below too, for grass and whatnot
-				//blockPos = level.PosToInt(x, (ushort)(y-1), z);
-				//if (!level.physics.PhysicsUpdates.Contains(blockPos))
-				//{
-				//	//Server.Log("adding to physics list", LogTypesEnum.debug);
-				//	level.physics.PhysicsUpdates.Add(blockPos);
-				//}
+				Block.Blocks[incomingType].OnPlace(this, Level, blockPos);
 			}
 			else
 			{
-				Level.PlayerBlockChange(this, x, y, z, (byte) Blocks.Air);
+				Level.PlayerBlockChange(this, x, y, z, (byte) MCBlocks.Air);
+				Block.Blocks[oldBlock].OnBreak(this, Level, blockPos);
 			}
 		}
 
@@ -360,6 +349,8 @@ namespace MineFrog
 
 		private void UpdatePlayerPos()
 		{
+			if (_isInvisible) return;
+
 			var packet = new Packet();
 
 			if (_delta.IsZero())
@@ -462,11 +453,17 @@ namespace MineFrog
 			if (Commands.CommandHandler.Commands.ContainsKey(accessor))
 			{
 				Commands.CommandBase commandBase = Commands.CommandHandler.Commands[accessor];
-				if(PermissionLevel < commandBase.Permission)
+				if (PermissionLevel < commandBase.Permission)
 				{
 					SendMessage("You do not have permission to use that command!");
 				}
-				else commandBase.Use(this, parameters, messageSend);
+				else
+				{
+					ThreadPool.QueueUserWorkItem(delegate
+					{
+						commandBase.PlayerUse(this, parameters, messageSend);
+					});
+				}
 			}
 				
 			else

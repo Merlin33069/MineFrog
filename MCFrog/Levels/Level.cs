@@ -158,11 +158,11 @@ namespace MineFrog
 					{
 						if (y != half)
 						{
-							SetTile(x, y, z, (byte) ((y >= half) ? Blocks.Air : Blocks.Dirt));
+							SetTile(x, y, z, (byte) ((y >= half) ? MCBlocks.Air : MCBlocks.Dirt));
 						}
 						else
 						{
-							SetTile(x, y, z, (byte) Blocks.Grass);
+							SetTile(x, y, z, (byte) MCBlocks.Grass);
 						}
 					}
 				}
@@ -290,7 +290,7 @@ namespace MineFrog
 						int pos = PosToInt(blockPos);
 						if (BlockData[pos] == 0) continue;
 						if (Physics.PhysicsUpdates.Contains(pos)) continue;
-						Physics.PhysicsUpdates.Add(pos);
+						Physics.AddCall(pos);
 					}
 		}
 
@@ -349,7 +349,7 @@ namespace MineFrog
 			return false;
 		}
 
-		public bool PhysicsBlockChange(BlockPos pos, Blocks type)
+		public bool PhysicsBlockChange(BlockPos pos, MCBlocks type)
 		{
 			return PhysicsBlockChange(pos, (byte) type);
 		}
@@ -364,18 +364,18 @@ namespace MineFrog
 			return BlockData[PosToInt(x, y, z)];
 		}
 
-		public Blocks GetTile(BlockPos pos)
+		public MCBlocks GetTile(BlockPos pos)
 		{
-			return (Blocks) GetTile(pos.X, pos.Y, pos.Z);
+			return (MCBlocks) GetTile(pos.X, pos.Y, pos.Z);
 		}
 
-		public Blocks GetTile(BlockPos pos, int diffX, int diffY, int diffZ)
+		public MCBlocks GetTile(BlockPos pos, int diffX, int diffY, int diffZ)
 		{
 			var x = (ushort) (pos.X + diffX);
 			var y = (ushort) (pos.Y + diffY);
 			var z = (ushort) (pos.Z + diffZ);
 
-			return (Blocks) GetTile(x, y, z);
+			return (MCBlocks) GetTile(x, y, z);
 		}
 
 		public bool NotInBounds(ushort x, ushort y, ushort z)
