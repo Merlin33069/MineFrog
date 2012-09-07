@@ -78,7 +78,7 @@ namespace MineFrog
 		public virtual bool IsCrushable { get { return false; } }
 		public virtual bool CanLightPass { get { return false; } }
 		public virtual bool OnlyAdmin { get { return false; } }
-		public virtual byte PhysicsDelay { get { return 0; } }
+		public virtual ushort PhysicsDelay { get { return 0; } }
 		
 		public abstract byte ThisID { get; }
 		public virtual byte BaseType { get { return ThisID; } }

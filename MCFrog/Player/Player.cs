@@ -278,7 +278,16 @@ namespace MineFrog
 			bool isPlacing = data[6] == 0x01;
 			byte incomingType = data[7];
 
+			if (Level.NotInBounds(x, y, z)) return;
+
 			int blockPos = Level.PosToInt(x, y, z);
+
+			if (blockPos >= Level.BlockData.Length || blockPos < 0)
+			{
+				Server.Log(blockPos + " was OUT OF BOUNDS!", LogTypesEnum.Error);
+				return;
+			}
+
 			byte oldBlock = Level.BlockData[blockPos];
 
 			if (_enableHistoryMode)

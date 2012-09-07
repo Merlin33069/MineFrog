@@ -29,8 +29,8 @@ namespace MineFrog
 		internal int UpdateCountToSave = 0; //This counts up to the frequency, so we know when to save :D
 		internal int UpdateCountSaveFrequency = 30; //Each update check is 10 seconds, so this is 5 mins
 
-		internal byte VisitPermissions = 0;
-		internal byte BuildPermissions = 0;
+		internal byte VisitPermissions = 1;
+		internal byte BuildPermissions = 1;
 
 		public Pos SpawnPos;
 

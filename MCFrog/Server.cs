@@ -107,7 +107,7 @@ namespace MineFrog
 
 		void InitializeBaseGroups()
 		{
-			var dbData = new object[] { "Guest", "<GUEST>", MCColor.white, (byte)0, false, true, true, 1000 };
+			var dbData = new object[] { "Guest", "<GUEST>", MCColor.white, (byte)1, false, true, true, 1000 };
 			Server.groups.NewRow(dbData);
 
 			dbData = new object[] { "Builder", "<BLDR>", MCColor.lime, (byte)50, false, true, true, 1000 };
@@ -117,6 +117,9 @@ namespace MineFrog
 			Server.groups.NewRow(dbData);
 
 			dbData = new object[] { "Owner", "<OWNER>", MCColor.gold, (byte)200, true, true, true, 10000 };
+			Server.groups.NewRow(dbData);
+
+			dbData = new object[] { "Banned", "<BANNED>", MCColor.black, (byte)0, false, false, false, 0 };
 			Server.groups.NewRow(dbData);
 		}
 

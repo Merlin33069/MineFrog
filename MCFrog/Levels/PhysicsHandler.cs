@@ -14,8 +14,9 @@ namespace MineFrog
 
 		public bool IsEnabled = false; //Disabled by default
 		public Dictionary<int, byte> OtherData = new Dictionary<int, byte>();
-		public Dictionary<int, byte> Delay = new Dictionary<int, byte>(); 
+		public Dictionary<int, ushort> Delay = new Dictionary<int, ushort>(); 
 		public List<int> PhysicsUpdates = new List<int>();
+		List<int> _tempPhysicsList = new List<int>(); 
 
 		public bool Realistic = true;
 		public bool ShouldStop = false;
@@ -44,39 +45,63 @@ namespace MineFrog
 			if (PhysicsUpdates.Count > 100000)
 			{
 				PhysicsUpdates.Clear();
+				Delay.Clear();
+
 				Server.Log("Physics was overloaded on " + Level.Name + ", physics has been reset.", LogTypesEnum.Error);
 				return;
 			}
 
 			for (int iterations = 0; iterations < ChecksPerTick; ++iterations)
 			{
-				if (PhysicsUpdates.Count == 0) return;
+				if (PhysicsUpdates.Count == 0) break;
 
 				int blockpos = PhysicsUpdates[0];
-
+				
 				PhysicsUpdates.Remove(blockpos);
 
 				if (Delay.ContainsKey(blockpos))
 				{
-					if (Delay[blockpos] == 0) Delay.Remove(blockpos);
+					if (Delay[blockpos] == 0)
+					{
+						Delay.Remove(blockpos);
+					}
 					else
 					{
 						Delay[blockpos]--;
-						PhysicsUpdates.Add(blockpos);
+						//Console.WriteLine(Block.Blocks[Level.BlockData[blockpos]].Name);
+						_tempPhysicsList.Add(blockpos);
+						iterations--;
+						continue;
 					}
 				}
-
 				if (blockpos < 0 || blockpos >= Level.BlockData.Length) continue;
 				byte type = Level.BlockData[blockpos];
 
-				Block.Blocks[type].Physics(Level, blockpos);
+				if(Block.Blocks.ContainsKey(type)) Block.Blocks[type].Physics(Level, blockpos);
 			}
+
+			for (int i = 0; i < _tempPhysicsList.Count; i++)
+			{
+				PhysicsUpdates.Add(_tempPhysicsList[i]);
+			}
+			_tempPhysicsList.Clear();
 		}
 
 		internal void AddCall(int blockpos)
 		{
-			byte type = Level.BlockData[blockpos];
-			byte delay = Block.Blocks[type].PhysicsDelay;
+			if (PhysicsUpdates.Contains(blockpos)) return; //Don't add it twice >_>
+
+			var type = Level.BlockData[blockpos];
+			ushort delay = 0;
+			try
+			{
+				delay = Block.Blocks[type].PhysicsDelay;
+			}
+			catch (Exception e)
+			{
+				Server.Log("Type: " + type + " -> " + e.Message, LogTypesEnum.Error);
+			}
+			
 
 			Delay.Remove(blockpos);
 

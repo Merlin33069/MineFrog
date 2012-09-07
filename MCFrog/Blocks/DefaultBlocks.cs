@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace MineFrog.Blocks
 {
@@ -58,7 +55,7 @@ namespace MineFrog.Blocks
 			int abovePos = level.PosToInt(aboveBlockPos);
 			byte type = level.BlockData[abovePos];
 
-			if (Block.LightPass.Contains(type)) return;
+			if (LightPass.Contains(type)) return;
 
 			level.PhysicsBlockChange(blockPos, MCBlocks.Dirt);
 		}
@@ -70,9 +67,9 @@ namespace MineFrog.Blocks
 			get { return "Dirt"; }
 		}
 
-		public override byte PhysicsDelay
+		public override ushort PhysicsDelay
 		{
-			get { return 255; }
+			get { return 100; }
 		}
 
 		public override byte ThisID
@@ -104,7 +101,7 @@ namespace MineFrog.Blocks
 
 				byte type = level.BlockData[currentPos];
 
-				if (!Block.LightPass.Contains(type)) return;
+				if (!LightPass.Contains(type)) return;
 			}
 			if (level.BlockData[pos] != (byte)MCBlocks.Dirt) return;
 			level.PhysicsBlockChange(blockPos, MCBlocks.Grass);
@@ -179,7 +176,7 @@ namespace MineFrog.Blocks
 			get { return "Water"; }
 		}
 
-		public override byte PhysicsDelay
+		public override ushort PhysicsDelay
 		{
 			get { return 5; }
 		}
@@ -202,7 +199,7 @@ namespace MineFrog.Blocks
 				level.Physics.OtherData.Remove(belowPos);
 				level.Physics.OtherData.Add(belowPos, level.Physics.WaterCurrent);
 			}
-			else if (Block.Crushable.Contains(type))
+			else if (Crushable.Contains(type))
 			{
 				level.Physics.OtherData.Remove(belowPos);
 				level.Physics.OtherData.Add(belowPos, level.Physics.WaterCurrent);
@@ -227,7 +224,7 @@ namespace MineFrog.Blocks
 							level.Physics.OtherData.Remove(newPos);
 							level.Physics.OtherData.Add(newPos, level.Physics.WaterCurrent);
 						}
-						else if (Block.Crushable.Contains(level.BlockData[newPos]))
+						else if (Crushable.Contains(level.BlockData[newPos]))
 						{
 							level.Physics.OtherData.Remove(newPos);
 							level.Physics.OtherData.Add(newPos, level.Physics.WaterCurrent);
@@ -247,7 +244,7 @@ namespace MineFrog.Blocks
 			get { return "WaterStill"; }
 		}
 
-		public override byte PhysicsDelay
+		public override ushort PhysicsDelay
 		{
 			get { return 5; }
 		}
@@ -278,7 +275,7 @@ namespace MineFrog.Blocks
 					level.Physics.OtherData.Add(belowPos, current);
 				}
 			}
-			else if (Block.Crushable.Contains(type))
+			else if (Crushable.Contains(type))
 			{
 				level.Physics.OtherData.Remove(belowPos);
 				level.Physics.OtherData.Add(belowPos, current);
@@ -301,11 +298,17 @@ namespace MineFrog.Blocks
 
 						if (newType == (byte)MCBlocks.WaterStill)
 						{
-							if (level.Physics.OtherData[newPos] >= current) continue;
-							level.Physics.OtherData.Remove(newPos);
-							level.Physics.OtherData.Add(newPos, current);
+							if (level.Physics.OtherData.ContainsKey(newPos))
+							{
+								if (level.Physics.OtherData[newPos] >= current) continue;
+								level.Physics.OtherData[newPos] = current;
+							}
+							else
+							{
+								level.Physics.OtherData.Add(newPos, current);
+							}
 						}
-						else if (Block.Crushable.Contains(newType))
+						else if (Crushable.Contains(newType))
 						{
 							level.Physics.OtherData.Remove(newPos);
 							level.Physics.OtherData.Add(newPos, current);
@@ -325,7 +328,7 @@ namespace MineFrog.Blocks
 			get { return "Lava"; }
 		}
 
-		public override byte PhysicsDelay
+		public override ushort PhysicsDelay
 		{
 			get { return 100; }
 		}
@@ -348,7 +351,7 @@ namespace MineFrog.Blocks
 				level.Physics.OtherData.Remove(belowPos);
 				level.Physics.OtherData.Add(belowPos, level.Physics.LavaCurrent);
 			}
-			else if (Block.Crushable.Contains(type))
+			else if (Crushable.Contains(type))
 			{
 				level.Physics.OtherData.Remove(belowPos);
 				level.Physics.OtherData.Add(belowPos, level.Physics.LavaCurrent);
@@ -373,7 +376,7 @@ namespace MineFrog.Blocks
 							level.Physics.OtherData.Remove(newPos);
 							level.Physics.OtherData.Add(newPos, level.Physics.LavaCurrent);
 						}
-						else if (Block.Crushable.Contains(level.BlockData[newPos]))
+						else if (Crushable.Contains(level.BlockData[newPos]))
 						{
 							level.Physics.OtherData.Remove(newPos);
 							level.Physics.OtherData.Add(newPos, level.Physics.LavaCurrent);
@@ -393,7 +396,7 @@ namespace MineFrog.Blocks
 			get { return "LavaStill"; }
 		}
 
-		public override byte PhysicsDelay
+		public override ushort PhysicsDelay
 		{
 			get { return 100; }
 		}
@@ -424,7 +427,7 @@ namespace MineFrog.Blocks
 					level.Physics.OtherData.Add(belowPos, current);
 				}
 			}
-			else if (Block.Crushable.Contains(type))
+			else if (Crushable.Contains(type))
 			{
 				level.Physics.OtherData.Remove(belowPos);
 				level.Physics.OtherData.Add(belowPos, current);
@@ -447,11 +450,17 @@ namespace MineFrog.Blocks
 
 						if (newType == (byte)MCBlocks.LavaStill)
 						{
-							if (level.Physics.OtherData[newPos] >= current) continue;
-							level.Physics.OtherData.Remove(newPos);
-							level.Physics.OtherData.Add(newPos, current);
+							if (level.Physics.OtherData.ContainsKey(newPos))
+							{
+								if (level.Physics.OtherData[newPos] >= current) continue;
+								level.Physics.OtherData[newPos] = current;
+							}
+							else
+							{
+								level.Physics.OtherData.Add(newPos, current);
+							}
 						}
-						else if (Block.Crushable.Contains(newType))
+						else if (Crushable.Contains(newType))
 						{
 							level.Physics.OtherData.Remove(newPos);
 							level.Physics.OtherData.Add(newPos, current);
@@ -471,9 +480,9 @@ namespace MineFrog.Blocks
 			get { return "Sand"; }
 		}
 
-		public override byte PhysicsDelay
+		public override ushort PhysicsDelay
 		{
-			get { return 5; }
+			get { return 10; }
 		}
 
 		public override byte ThisID
@@ -491,7 +500,7 @@ namespace MineFrog.Blocks
 			if (below == MCBlocks.Zero)
 			{
 			}
-			else if (Block.Crushable.Contains((byte)below))
+			else if (Crushable.Contains((byte)below))
 			{
 				level.PhysicsBlockChange(belowBlockPos, MCBlocks.Sand);
 				level.PhysicsBlockChange(blockPos, MCBlocks.Air);
@@ -511,7 +520,7 @@ namespace MineFrog.Blocks
 
 						int testPos = level.PosToInt(aroundPos);
 						int newPos = level.PosToInt(aroundBelowPos);
-						if (Block.Crushable.Contains(level.BlockData[newPos]) && level.BlockData[testPos] == 0)
+						if (Crushable.Contains(level.BlockData[newPos]) && level.BlockData[testPos] == 0)
 						{
 							level.PhysicsBlockChange(aroundBelowPos, MCBlocks.Sand);
 							level.PhysicsBlockChange(blockPos, MCBlocks.Air);
@@ -530,7 +539,7 @@ namespace MineFrog.Blocks
 			get { return "Gravel"; }
 		}
 
-		public override byte PhysicsDelay
+		public override ushort PhysicsDelay
 		{
 			get { return 5; }
 		}
@@ -550,7 +559,7 @@ namespace MineFrog.Blocks
 			if (below == MCBlocks.Zero)
 			{
 			}
-			else if (Block.Crushable.Contains((byte)below))
+			else if (Crushable.Contains((byte)below))
 			{
 				level.PhysicsBlockChange(belowPos, MCBlocks.Gravel);
 				level.PhysicsBlockChange(blockPos, MCBlocks.Air);
@@ -570,7 +579,7 @@ namespace MineFrog.Blocks
 
 						int testPos = level.PosToInt(aroundPos);
 						int newPos = level.PosToInt(aroundBelowPos);
-						if (Block.Crushable.Contains(level.BlockData[newPos]) && level.BlockData[testPos] == 0)
+						if (Crushable.Contains(level.BlockData[newPos]) && level.BlockData[testPos] == 0)
 						{
 							level.PhysicsBlockChange(aroundBelowPos, MCBlocks.Gravel);
 							level.PhysicsBlockChange(blockPos, MCBlocks.Air);
