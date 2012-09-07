@@ -67,18 +67,26 @@ namespace MineFrog.Database
 
 		public void UpdateRow(long id, object[] data)
 		{
-			if (data.Length != _dataTypes.Length) throw new InvalidDataException("Invalid Column Count!");
+			try
+			{
+				if (data.Length != _dataTypes.Length) throw new InvalidDataException("Invalid Column Count!");
 
-			var position = id*_rowSize;
-			var bytes = database.GetBytes(_rowSize, _dataTypes, data);
+				var position = id*_rowSize;
+				var bytes = database.GetBytes(_rowSize, _dataTypes, data);
 
-			if (bytes.Length != _rowSize) throw new InvalidDataException("Invalid Columns Size!");
+				if (bytes.Length != _rowSize) throw new InvalidDataException("Invalid Columns Size!");
 
-			_fileStream.Position = position;
+				_fileStream.Position = position;
 
-			_fileStream.Write(bytes, 0, _rowSize);
+				_fileStream.Write(bytes, 0, _rowSize);
 
-			_fileStream.Flush();
+				_fileStream.Flush();
+			}
+			catch(Exception e)
+			{
+				Console.WriteLine(e.Message);
+				Console.WriteLine(e.StackTrace);
+			}
 		}
 		public void UpdateItem(long id, byte columnNumber, object data)
 		{

@@ -40,6 +40,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CmdDatabase.cs" />
     <Compile Include="CmdSave.cs" />
     <Compile Include="CmdWater.cs" />
     <Compile Include="CmdLava.cs" />

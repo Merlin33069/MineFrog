@@ -26,6 +26,11 @@ namespace MineFrog.Database
 			database.CreateNewTable(name, dataTypes);
 		}
 
+		public void LoadKeyFile()
+		{
+			database.LoadKeyFile();
+		}
+
 		public override object InitializeLifetimeService()
 		{
 			// returning null here will prevent the lease manager

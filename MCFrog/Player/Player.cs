@@ -239,6 +239,16 @@ namespace MineFrog
 			if(pdb == null)
 			{
 				var dbData = new object[] {Username, "", _ip, (byte) 0, 0, false, false};
+				try
+				{
+					UID = Server.users.NewRow(dbData);
+				}
+				catch (Exception e)
+				{
+					Console.WriteLine("PDB ERROR WTF :D");
+					throw new Exception("FUCK");
+				}
+
 				UID = Server.users.NewRow(dbData);
 				pdb = new PDB(UID, dbData);
 			}

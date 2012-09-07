@@ -13,7 +13,9 @@ namespace MineFrog.Database
 		internal const string KeyfilePath = "database/keyfile.DKF";
 		internal const string DatabaseFilesPrePath = "database/";
 		public bool IsInitialized = false;
-		
+
+		private FileStream _keyFileStream;
+
 		private readonly ASCIIEncoding Encode = new ASCIIEncoding();
 
 		private readonly Dictionary<string, Table> LoadedTables = new Dictionary<string, Table>();
@@ -23,36 +25,35 @@ namespace MineFrog.Database
 			LoadKeyFile();
 		}
 
-		internal void LoadKeyFile()
+		public void LoadKeyFile()
 		{
 			Console.WriteLine("Loading DB Keyfile!");
 			try
 			{
+				Console.WriteLine("db-1");
 				if (!Directory.Exists(KeyfilePath.Split('/')[0].Trim())) //Check for firectory
 				{
+					Console.WriteLine("db-2");
 					Directory.CreateDirectory(KeyfilePath.Split('/')[0].Trim()); //Create directory if needed
 				}
-				if (!File.Exists(KeyfilePath)) //Check for keyfile
-				{
-					File.Create(KeyfilePath); //Create keyfile if needed!
-					return;
-				}
-
-				FileStream fileStream = File.OpenRead(KeyfilePath);
-				long length = fileStream.Length;
-
+				Console.WriteLine("db-4");
+				if (_keyFileStream == null) _keyFileStream = new FileStream(KeyfilePath, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
+				long length = _keyFileStream.Length;
+				Console.WriteLine("db-5");
 				if(length == 0) //Making sure that the dater is in da keyfile
 				{
-					//Nothing to see here ^_^
+					Console.WriteLine("db-6");
+					//_keyFileStream.Close();
 					return;
 				}
 				if (length <= 16) //Here were just checking to make sure there is data in the keyfile. that is worth reading.
 				{
-					fileStream.Close();
+					Console.WriteLine("db-7");
+					//_keyFileStream.Close();
 					File.Delete(KeyfilePath);
 					throw (new FileLoadException("KeyFile INVALID!"));
 				}
-
+				Console.WriteLine("db-8");
 				/*
 				 * KeyFile Structure:
 				 * 
@@ -61,30 +62,32 @@ namespace MineFrog.Database
 				 * Data[] > Datatypes
 				 * 
 				 */
-				while (fileStream.Position < length)
+				while (_keyFileStream.Position < length)
 				{
-					var tableName = (string) GetData(DataTypes.Name, fileStream);
+					Console.WriteLine("db-9");
+					var tableName = (string)GetData(DataTypes.Name, _keyFileStream);
 
-					var numberOfColumns = (byte) fileStream.ReadByte();
+					var numberOfColumns = (byte)_keyFileStream.ReadByte();
 
 					var dataTypesIntermediateBytes = new byte[numberOfColumns];
-
-					fileStream.Read(dataTypesIntermediateBytes, 0, numberOfColumns);
+					Console.WriteLine("db-10");
+					_keyFileStream.Read(dataTypesIntermediateBytes, 0, numberOfColumns);
 
 					DataTypes[] dataTypes = GetDataTypes(dataTypesIntermediateBytes);
-					
+					Console.WriteLine("db-11");
 					//Add this table to our list of LOADED tables
 					tableName = tableName.Trim();
 					LoadedTables.Add(tableName.ToLower(),
 									  new Table(this, tableName, DatabaseFilesPrePath + tableName, dataTypes, GetTotalSize(dataTypes)));
 				}
-
-				fileStream.Close();
+				Console.WriteLine("db-12");
+				//_keyFileStream.Close();
 
 				IsInitialized = true;
 			}
 			catch (Exception e)
 			{
+				//if (_keyFileStream != null) _keyFileStream.Close();
 				Console.WriteLine(e.Message);
 				Console.WriteLine(e.StackTrace);
 			}
@@ -316,29 +319,42 @@ namespace MineFrog.Database
 			}
 		}
 
-		internal void CreateNewTable(string name, DataTypes[] dataTypes)
+		public void CreateNewTable(string name, DataTypes[] dataTypes)
 		{
-			name = name.Trim();
-
-			if(name.Length > 16)
+			if(_keyFileStream == null)
 			{
-				throw (new ArgumentException("Table name must be no longer than 16 characters!"));
+				_keyFileStream = new FileStream(KeyfilePath, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
 			}
+			try
+			{
+				_keyFileStream.Position = _keyFileStream.Length;
+				name = name.Trim();
 
-			var fileStream = File.Open(KeyfilePath, FileMode.Append);
+				if (name.Length > 16)
+				{
+					throw (new ArgumentException("Table name must be no longer than 16 characters!"));
+				}
 
-			var toWrite = Encode.GetBytes(name.PadRight(16));
-			fileStream.Write(toWrite, 0, 16);
-			fileStream.WriteByte((byte)dataTypes.Length);
-			for (int i = 0; i < dataTypes.Length;i++ ) fileStream.WriteByte((byte)dataTypes[i]);
+				//_keyFileStream = File.Open(KeyfilePath, FileMode.Append);
 
-			fileStream.Flush();
-			fileStream.Close();
-			
-			var table = new Table(this, name, DatabaseFilesPrePath + name, dataTypes, GetTotalSize(dataTypes));
+				var toWrite = Encode.GetBytes(name.PadRight(16));
+				_keyFileStream.Write(toWrite, 0, 16);
+				_keyFileStream.WriteByte((byte)dataTypes.Length);
+				for (int i = 0; i < dataTypes.Length; i++) _keyFileStream.WriteByte((byte)dataTypes[i]);
 
-			LoadedTables.Add(name.ToLower(), table);
+				_keyFileStream.Flush();
+				//_keyFileStream.Close();
 
+				var table = new Table(this, name, DatabaseFilesPrePath + name, dataTypes, GetTotalSize(dataTypes));
+
+				LoadedTables.Add(name.ToLower(), table);
+			}
+			catch(Exception e)
+			{
+				//if (_keyFileStream != null) _keyFileStream.Close();
+				Console.WriteLine(e.Message);
+				Console.WriteLine(e.StackTrace);
+			}
 		}
 
 		#region Table Exist and Find Methods

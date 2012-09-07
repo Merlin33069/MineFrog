@@ -95,6 +95,7 @@ namespace MineFrog.PreLoader
 
 		public void sync()
 		{
+			Server.Log("Saving user data to user table!", LogTypesEnum.Debug);
 			Server.users.UpdateRow(UID, new object[] {Username, "", IP, WarningLevel, GroupID, isFrozen, isMuted});
 		}
 	}

@@ -28,8 +28,9 @@ namespace MineFrog
 		public void Start()
 		{
 			inputOutput = DONOTUSEMEInputOutputNS;
-			HistoryController = DONOTUSEMEHistoryControllerNS;
 			DatabaseController = DONOTUSEMEDatabaseControllerNS;
+
+			HistoryController = DONOTUSEMEHistoryControllerNS;
 			HeartBeat = DONOTUSEMEHeartBeatNS;
 			InputOutput.InitLogTypes();
 			Block.LoadBlocks();
@@ -41,29 +42,51 @@ namespace MineFrog
 				new Thread(StartLevelHandler).Start();
 				new Thread(StartPerformanceMonitor).Start();
 				StartCommandHandler();
-
-				CheckDatabaseTables();
 			}
 			catch (Exception e)
 			{
 				Console.WriteLine(e.Message);
 				Console.WriteLine(e.StackTrace);
 			}
+
+			int count = 0;
+			//while (!DatabaseController.database.IsInitialized)
+			//{
+			//    Thread.Sleep(1000);
+			//    count++;
+			//    if (count == 10)
+			//    {
+			//        //try
+			//        //{
+			//        //    DatabaseController.database.LoadKeyFile();
+			//        //}
+			//        //catch
+			//        //{
+			//            throw new Exception("DATABASE NOT LOADING!");
+			//        //}
+					
+			//    }
+			//}
+			//DatabaseController.LoadKeyFile();
+			//DatabaseController.database.LoadKeyFile();
+			CheckDatabaseTables();
 			
 			StartInput();
 		}
 
 		void CheckDatabaseTables()
 		{
+			Server.Log("CHECKING TABLES!", LogTypesEnum.Debug);
 			CheckGroups();
 			CheckUsers();
 		}
 
 		void CheckUsers()
 		{
+			Server.Log("Chk Usr", LogTypesEnum.Debug);
 			if (!DatabaseController.TableExists("users"))
 			{
-				//Server.Log("Table No Exists", LogTypesEnum.Debug);
+				Server.Log("Table No Exists", LogTypesEnum.Debug);
 				DatabaseController.CreateNewTable("users", new[] { DataTypes.Name, DataTypes.Message, DataTypes.Name, DataTypes.Byte, DataTypes.Int, DataTypes.Bool, DataTypes.Bool });
 			}
 			if (!DatabaseController.TableExists("users"))
@@ -83,7 +106,7 @@ namespace MineFrog
 		{
 			if (!DatabaseController.TableExists("groups"))
 			{
-				//Server.Log("Table No Exists", LogTypesEnum.Debug);
+				Server.Log("Table No Exists", LogTypesEnum.Debug);
 				DatabaseController.CreateNewTable("groups", new[] { DataTypes.Name, DataTypes.Message, DataTypes.Name, DataTypes.Byte, DataTypes.Bool, DataTypes.Bool, DataTypes.Bool, DataTypes.Int});
 			}
 			if (!DatabaseController.TableExists("groups"))
