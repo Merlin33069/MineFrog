@@ -49,7 +49,7 @@ namespace MineFrog.Blocks
 
 		public override void Physics(Level level, int pos)
 		{
-			BlockPos blockPos = level.IntToPos(pos);
+			BlockPos blockPos = level.IntToBlockPos(pos);
 			BlockPos aboveBlockPos = blockPos.Diff(0, 1, 0);
 
 			int abovePos = level.PosToInt(aboveBlockPos);
@@ -79,7 +79,7 @@ namespace MineFrog.Blocks
 
 		public override void Physics(Level level, int pos)
 		{
-			BlockPos blockPos = level.IntToPos(pos);
+			BlockPos blockPos = level.IntToBlockPos(pos);
 
 			//This code works, but in order to change dirt into grass we have to check below every block in the same way, so we wont use it for now
 			//if (level.physics.realistic)
@@ -188,53 +188,28 @@ namespace MineFrog.Blocks
 
 		public override void Physics(Level level, int pos)
 		{
-			BlockPos blockPos = level.IntToPos(pos);
-			BlockPos belowBlockPos = blockPos.Diff(0, -1, 0);
+			var blockPos = level.IntToBlockPos(pos);
+			var belowPos = blockPos.Below;
 
-			int belowPos = level.PosToInt(belowBlockPos);
-			byte type = level.BlockData[belowPos];
+			if(!BlockCheck(belowPos))
+				blockPos.Around(BlockCheck);
+		}
 
-			if (type == (byte)MCBlocks.WaterStill)
+		bool BlockCheck(BlockPos block)
+		{
+			if (block.BlockMCType == MCBlocks.WaterStill)
 			{
-				level.Physics.OtherData.Remove(belowPos);
-				level.Physics.OtherData.Add(belowPos, level.Physics.WaterCurrent);
+				AddOtherData(block.Level, block.Index, block.Level.Physics.WaterCurrent);
+				return true;
 			}
-			else if (Crushable.Contains(type))
+			if (Crushable.Contains(block.BlockType))
 			{
-				level.Physics.OtherData.Remove(belowPos);
-				level.Physics.OtherData.Add(belowPos, level.Physics.WaterCurrent);
-				level.PhysicsBlockChange(belowBlockPos, MCBlocks.WaterStill);
+				AddOtherData(block.Level, block.Index, block.Level.Physics.WaterCurrent);
+				PhysicsBlockChange(block, MCBlocks.WaterStill);
+				return true;
 			}
-			else
-			{
-				for (int x = -1; x < 2; ++x)
-					for (int z = -1; z < 2; ++z)
-					{
-						if (Math.Abs(x) == 1 && Math.Abs(z) == 1) continue;
-						if (blockPos.X + x < 0 || blockPos.Z + z < 0) continue;
 
-						BlockPos aroundPos = blockPos.Diff(x, 0, z);
-
-						if (level.NotInBounds(aroundPos)) continue;
-
-						int newPos = level.PosToInt(aroundPos);
-
-						if (level.BlockData[newPos] == (byte)MCBlocks.WaterStill)
-						{
-							level.Physics.OtherData.Remove(newPos);
-							level.Physics.OtherData.Add(newPos, level.Physics.WaterCurrent);
-						}
-						else if (Crushable.Contains(level.BlockData[newPos]))
-						{
-							level.Physics.OtherData.Remove(newPos);
-							level.Physics.OtherData.Add(newPos, level.Physics.WaterCurrent);
-							level.PhysicsBlockChange(aroundPos, MCBlocks.WaterStill);
-							//if (level.physics.PhysicsUpdates.Contains(level.PosToInt(aroundBelowPos))) return;
-							//level.physics.PhysicsUpdates.Add(level.PosToInt(aroundBelowPos));
-							return;
-						}
-					}
-			}
+			return false;
 		}
 	}
 	public class WaterStill : Block
@@ -256,7 +231,7 @@ namespace MineFrog.Blocks
 
 		public override void Physics(Level level, int pos)
 		{
-			BlockPos blockPos = level.IntToPos(pos);
+			BlockPos blockPos = level.IntToBlockPos(pos);
 			BlockPos belowBlockPos = blockPos.Diff(0, -1, 0);
 
 			if (!level.Physics.OtherData.ContainsKey(pos)) return;
@@ -340,7 +315,7 @@ namespace MineFrog.Blocks
 
 		public override void Physics(Level level, int pos)
 		{
-			BlockPos blockPos = level.IntToPos(pos);
+			BlockPos blockPos = level.IntToBlockPos(pos);
 			BlockPos belowBlockPos = blockPos.Diff(0, -1, 0);
 
 			int belowPos = level.PosToInt(belowBlockPos);
@@ -408,7 +383,7 @@ namespace MineFrog.Blocks
 
 		public override void Physics(Level level, int pos)
 		{
-			BlockPos blockPos = level.IntToPos(pos);
+			BlockPos blockPos = level.IntToBlockPos(pos);
 			BlockPos belowBlockPos = blockPos.Diff(0, -1, 0);
 
 			if (!level.Physics.OtherData.ContainsKey(pos)) return;
@@ -492,7 +467,7 @@ namespace MineFrog.Blocks
 
 		public override void Physics(Level level, int pos)
 		{
-			BlockPos blockPos = level.IntToPos(pos);
+			BlockPos blockPos = level.IntToBlockPos(pos);
 			BlockPos belowBlockPos = blockPos.Diff(0, -1, 0);
 
 			MCBlocks below = level.GetTile(belowBlockPos);
@@ -551,7 +526,7 @@ namespace MineFrog.Blocks
 
 		public override void Physics(Level level, int pos)
 		{
-			BlockPos blockPos = level.IntToPos(pos);
+			BlockPos blockPos = level.IntToBlockPos(pos);
 			BlockPos belowPos = blockPos.Diff(0, -1, 0);
 
 			MCBlocks below = level.GetTile(belowPos);
@@ -674,7 +649,7 @@ namespace MineFrog.Blocks
 
 		public override void Physics(Level level, int pos)
 		{
-			BlockPos blockPos = level.IntToPos(pos);
+			BlockPos blockPos = level.IntToBlockPos(pos);
 
 			for (int x = -1; x < 2; ++x)
 			{
@@ -1042,7 +1017,7 @@ namespace MineFrog.Blocks
 
 		public override void Physics(Level level, int pos)
 		{
-			BlockPos blockPos = level.IntToPos(pos);
+			BlockPos blockPos = level.IntToBlockPos(pos);
 
 			BlockPos belowBlockPos = blockPos.Diff(0, -1, 0);
 			int belowPos = level.PosToInt(belowBlockPos);

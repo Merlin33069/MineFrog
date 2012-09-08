@@ -32,6 +32,17 @@ namespace MineFrog
 		internal byte VisitPermissions = 1;
 		internal byte BuildPermissions = 1;
 
+		public byte WaterCurrent
+		{
+			get { return Physics.WaterCurrent; }
+			set { Physics.WaterCurrent = value; }
+		}
+		public byte LavaCurrent
+		{
+			get { return Physics.LavaCurrent; }
+			set { Physics.LavaCurrent = value; }
+		}
+
 		public Pos SpawnPos;
 
 		public Level(string fileName, bool shouldCreateIfNotExist)
@@ -284,7 +295,7 @@ namespace MineFrog
 				for (int y = -1; y < 2; ++y)
 					for (int z = -1; z < 2; ++z)
 					{
-						var blockPos = new BlockPos(inX + x, inY + y, inZ + z);
+						var blockPos = new BlockPos(inX + x, inY + y, inZ + z, this);
 
 						if (NotInBounds(blockPos)) continue;
 						int pos = PosToInt(blockPos);
@@ -354,6 +365,11 @@ namespace MineFrog
 			return PhysicsBlockChange(pos, (byte) type);
 		}
 
+		public byte GetTile(int pos)
+		{
+			return BlockData[pos];
+		}
+
 		public byte GetTile(ushort x, ushort y, ushort z)
 		{
 			if (NotInBounds(x, y, z))
@@ -410,15 +426,17 @@ namespace MineFrog
 			return PosToInt(pos.X, pos.Y, pos.Z);
 		}
 
-		public BlockPos IntToPos(int pos)
+		public BlockPos IntToBlockPos(int pos)
 		{
+			//TODO make int to block pos more efficient (if possible)
+			int index = pos;
 			var y = (ushort) (pos/SizeX/SizeZ);
 			pos -= y*SizeX*SizeZ;
 			var z = (ushort) (pos/SizeX);
 			pos -= z*SizeX;
 			var x = (ushort) pos;
 
-			return new BlockPos(x, y, z);
+			return new BlockPos(x, y, z, index, this);
 		}
 
 		public int IntOffset(int pos, int x, int y, int z)
@@ -448,29 +466,99 @@ namespace MineFrog
 
 	}
 
+	//Declaring this outside the scope of a class so that we can just use it.S
+	public delegate bool BlockCheck(BlockPos pos);
+
 	public struct BlockPos
 	{
 		public ushort X;
 		public ushort Y;
 		public ushort Z;
+		public int Index;
+		public readonly Level Level;
+		public bool InBounds;
+		public byte BlockType;
+		public MCBlocks BlockMCType;
 
-		public BlockPos(ushort x, ushort y, ushort z)
+		public BlockPos Below
+		{
+			get { return Diff(0, -1, 0); }
+		}
+		public BlockPos Above
+		{
+			get { return Diff(0, 1, 0); }
+		}
+
+		public BlockPos(ushort x, ushort y, ushort z, int pos, Level l)
 		{
 			X = x;
 			Y = y;
 			Z = z;
+			Level = l;
+			Index = pos;
+			InBounds = !l.NotInBounds(X, Y, Z);
+			BlockType = !InBounds ? (byte)255 : l.GetTile(Index);
+			BlockMCType = (MCBlocks) BlockType;
 		}
-
-		public BlockPos(int x, int y, int z)
+		public BlockPos(int x, int y, int z, int pos, Level l)
 		{
 			X = (ushort) x;
 			Y = (ushort) y;
-			Z = (ushort) z;
+			Z = (ushort)z;
+			Level = l;
+			Index = pos;
+			InBounds = !l.NotInBounds(X, Y, Z);
+			BlockType = !InBounds ? (byte)255 : l.GetTile(Index);
+			BlockMCType = (MCBlocks)BlockType;
+		}
+
+		public BlockPos(ushort x, ushort y, ushort z, Level l)
+		{
+			X = x;
+			Y = y;
+			Z = z;
+			Level = l;
+			Index = l.PosToInt(X, Y, Z);
+			InBounds = !l.NotInBounds(X, Y, Z);
+			BlockType = !InBounds ? (byte)255 : l.GetTile(Index);
+			BlockMCType = (MCBlocks)BlockType;
+		}
+		public BlockPos(int x, int y, int z, Level l)
+		{
+			X = (ushort)x;
+			Y = (ushort)y;
+			Z = (ushort)z;
+			Level = l;
+			Index = l.PosToInt(X, Y, Z);
+			InBounds = !l.NotInBounds(X, Y, Z);
+			BlockType = !InBounds ? (byte)255 : l.GetTile(Index);
+			BlockMCType = (MCBlocks)BlockType;
+		}
+		
+		public void Around(BlockCheck check)
+		{
+			for(var inx = -1; inx < 2; inx++)
+			{
+				for (var inz = -1; inz < 2; inz++)
+				{
+					//This checks to make sure were not checking corners
+					if (Math.Abs(inx) == 1 && Math.Abs(inz) == 1) continue;
+
+					//Create a new BlockPos struct
+					BlockPos blockPos = Diff(inx, 0, inz);
+
+					//Check if were inbounds, if not we don't check this one
+					if (!blockPos.InBounds) continue;
+
+					//Perform the delegate call!
+					check(blockPos);
+				}
+			}
 		}
 
 		public BlockPos Diff(int x, int y, int z)
 		{
-			return new BlockPos((ushort) (X + x), (ushort) (Y + y), (ushort) (Z + z));
+			return new BlockPos((ushort) (X + x), (ushort) (Y + y), (ushort) (Z + z), Level);
 		}
 	}
 }

@@ -87,6 +87,37 @@ namespace MineFrog
 		public virtual void OnBreak(Player p, Level level, int pos) { }
 		public virtual void Physics(Level level, int pos) { }
 
+		/// <summary>
+		/// This method adds a byte to the Otherdata dictionary for physics
+		/// This method will clear out any existing otherdata for the block position
+		/// </summary>
+		/// <param name="level">The level your working with</param>
+		/// <param name="pos">The Block position index in the level block data array</param>
+		/// <param name="value">The "OtherData" value to set for this block.</param>
+		public void AddOtherData(Level level, int pos, byte value)
+		{
+			RemoveOtherData(level, pos);
+			level.Physics.OtherData.Add(pos, value);
+		}
+		/// <summary>
+		/// This will remove any "OtherData" for the specified block index
+		/// </summary>
+		/// <param name="level">The level your working with</param>
+		/// <param name="pos">The index to remove from the list</param>
+		public void RemoveOtherData(Level level, int pos)
+		{
+			level.Physics.OtherData.Remove(pos);
+		}
+
+		public bool PhysicsBlockChange(BlockPos pos, byte type)
+		{
+			return pos.Level.PhysicsBlockChange(pos, type);
+		}
+		public bool PhysicsBlockChange(BlockPos pos, MCBlocks type)
+		{
+			return pos.Level.PhysicsBlockChange(pos, type);
+		}
+
 		internal void Initialize()
 		{
 			//Server.Log(Name + " block added as " + ThisID, LogTypesEnum.Debug);
