@@ -245,11 +245,10 @@ namespace MineFrog
 				}
 				catch (Exception e)
 				{
-					Console.WriteLine("PDB ERROR WTF :D");
 					throw new Exception("FUCK");
 				}
 
-				UID = Server.users.NewRow(dbData);
+				//UID = Server.users.NewRow(dbData);
 				pdb = new PDB(UID, dbData);
 			}
 			else

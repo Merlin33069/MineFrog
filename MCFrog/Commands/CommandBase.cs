@@ -83,7 +83,7 @@ namespace MineFrog.Commands
 
 				CommandHandler.Commands.Add(accessor.ToLower(), this);
 
-				Server.Log(accessor + " added for command " + Name, LogTypesEnum.Debug);
+				//Server.Log(accessor + " added for command " + Name, LogTypesEnum.Debug);
 			}
 		}
 	}

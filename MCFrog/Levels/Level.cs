@@ -436,7 +436,7 @@ namespace MineFrog
 			//Server.Log("Checking if level should save " + Name, LogTypesEnum.Debug);
 			UpdateCountToSave++;
 
-			if (UpdateCountToSave >= UpdateCountSaveFrequency || BlockChangeCount >= 1000)
+			if (UpdateCountToSave >= UpdateCountSaveFrequency || BlockChangeCount >= 5000)
 			{
 				Player.SendGlobalMessage("Saving Level: " + Name);
 				FullSave();

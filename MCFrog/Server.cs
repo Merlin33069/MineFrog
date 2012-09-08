@@ -76,14 +76,14 @@ namespace MineFrog
 
 		void CheckDatabaseTables()
 		{
-			Server.Log("CHECKING TABLES!", LogTypesEnum.Debug);
+			Server.Log("Loading Database Tables.", LogTypesEnum.Info);
 			CheckGroups();
 			CheckUsers();
 		}
 
 		void CheckUsers()
 		{
-			Server.Log("Chk Usr", LogTypesEnum.Debug);
+			//Server.Log("Chk Usr", LogTypesEnum.Debug);
 			if (!DatabaseController.TableExists("users"))
 			{
 				Server.Log("Table No Exists", LogTypesEnum.Debug);
@@ -104,6 +104,7 @@ namespace MineFrog
 		}
 		void CheckGroups()
 		{
+			//Server.Log("Chk Grp", LogTypesEnum.Debug);
 			if (!DatabaseController.TableExists("groups"))
 			{
 				Server.Log("Table No Exists", LogTypesEnum.Debug);

@@ -80,10 +80,7 @@ namespace MineFrog
 				if(Block.Blocks.ContainsKey(type)) Block.Blocks[type].Physics(Level, blockpos);
 			}
 
-			for (int i = 0; i < _tempPhysicsList.Count; i++)
-			{
-				PhysicsUpdates.Add(_tempPhysicsList[i]);
-			}
+			PhysicsUpdates.AddRange(_tempPhysicsList);
 			_tempPhysicsList.Clear();
 		}
 

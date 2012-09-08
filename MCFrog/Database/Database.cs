@@ -30,30 +30,30 @@ namespace MineFrog.Database
 			Console.WriteLine("Loading DB Keyfile!");
 			try
 			{
-				Console.WriteLine("db-1");
+				//Console.WriteLine("db-1");
 				if (!Directory.Exists(KeyfilePath.Split('/')[0].Trim())) //Check for firectory
 				{
-					Console.WriteLine("db-2");
+					//Console.WriteLine("db-2");
 					Directory.CreateDirectory(KeyfilePath.Split('/')[0].Trim()); //Create directory if needed
 				}
-				Console.WriteLine("db-4");
+				//Console.WriteLine("db-4");
 				if (_keyFileStream == null) _keyFileStream = new FileStream(KeyfilePath, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
 				long length = _keyFileStream.Length;
-				Console.WriteLine("db-5");
+				//Console.WriteLine("db-5");
 				if(length == 0) //Making sure that the dater is in da keyfile
 				{
-					Console.WriteLine("db-6");
+					//Console.WriteLine("db-6");
 					//_keyFileStream.Close();
 					return;
 				}
 				if (length <= 16) //Here were just checking to make sure there is data in the keyfile. that is worth reading.
 				{
-					Console.WriteLine("db-7");
+					//Console.WriteLine("db-7");
 					//_keyFileStream.Close();
 					File.Delete(KeyfilePath);
 					throw (new FileLoadException("KeyFile INVALID!"));
 				}
-				Console.WriteLine("db-8");
+				//Console.WriteLine("db-8");
 				/*
 				 * KeyFile Structure:
 				 * 
@@ -64,23 +64,23 @@ namespace MineFrog.Database
 				 */
 				while (_keyFileStream.Position < length)
 				{
-					Console.WriteLine("db-9");
+					//Console.WriteLine("db-9");
 					var tableName = (string)GetData(DataTypes.Name, _keyFileStream);
 
 					var numberOfColumns = (byte)_keyFileStream.ReadByte();
 
 					var dataTypesIntermediateBytes = new byte[numberOfColumns];
-					Console.WriteLine("db-10");
+					//Console.WriteLine("db-10");
 					_keyFileStream.Read(dataTypesIntermediateBytes, 0, numberOfColumns);
 
 					DataTypes[] dataTypes = GetDataTypes(dataTypesIntermediateBytes);
-					Console.WriteLine("db-11");
+					//Console.WriteLine("db-11");
 					//Add this table to our list of LOADED tables
 					tableName = tableName.Trim();
 					LoadedTables.Add(tableName.ToLower(),
 									  new Table(this, tableName, DatabaseFilesPrePath + tableName, dataTypes, GetTotalSize(dataTypes)));
 				}
-				Console.WriteLine("db-12");
+				//Console.WriteLine("db-12");
 				//_keyFileStream.Close();
 
 				IsInitialized = true;

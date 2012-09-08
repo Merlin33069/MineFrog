@@ -81,6 +81,13 @@ namespace MineFrog.PreLoader
 			isFrozen = (bool) data[5];
 			isMuted = (bool) data[6];
 
+			if(Pdbs.ContainsKey(Username))
+			{
+				Server.Log("Duplicate user '" + Username + "' in database!", LogTypesEnum.Error);
+				Server.Log("This CANNOT be fixed!", LogTypesEnum.Error);
+				return;
+			}
+
 			Pdbs.Add(Username, this);
 
 			if (Group == null)

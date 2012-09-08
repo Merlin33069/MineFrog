@@ -89,7 +89,7 @@ namespace MineFrog
 
 		internal void Initialize()
 		{
-			Server.Log(Name + " block added as " + ThisID, LogTypesEnum.Debug);
+			//Server.Log(Name + " block added as " + ThisID, LogTypesEnum.Debug);
 
 			if(IsCrushable) Crushable.Add(ThisID);
 			if(CanLightPass) LightPass.Add(ThisID);
