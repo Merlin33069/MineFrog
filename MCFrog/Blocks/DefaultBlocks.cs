@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace MineFrog.Blocks
 {
@@ -191,7 +192,7 @@ namespace MineFrog.Blocks
 			var blockPos = level.IntToBlockPos(pos);
 			var belowPos = blockPos.Below;
 
-			if(!BlockCheck(belowPos))
+			if (!BlockCheck(belowPos))
 				blockPos.Around(BlockCheck);
 		}
 
@@ -634,6 +635,8 @@ namespace MineFrog.Blocks
 		{
 			get { return 18; }
 		}
+
+
 	}
 	public class Sponge : Block
 	{

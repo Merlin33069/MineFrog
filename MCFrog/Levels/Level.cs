@@ -541,6 +541,9 @@ namespace MineFrog
 			{
 				for (var inz = -1; inz < 2; inz++)
 				{
+					//This skips checking of the center block
+					if (inx == 0 && inz == 0) continue;
+
 					//This checks to make sure were not checking corners
 					if (Math.Abs(inx) == 1 && Math.Abs(inz) == 1) continue;
 

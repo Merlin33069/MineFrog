@@ -64,6 +64,7 @@
     <Compile Include="Levels\PhysicsHandler.cs" />
     <Compile Include="Player\Player.cs" />
     <Compile Include="Player\PlayerHandler.cs" />
+    <Compile Include="Plugins\PluginBase.cs" />
     <Compile Include="PreLoader\GDB.cs" />
     <Compile Include="PreLoader\PDB.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
