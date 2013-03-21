@@ -32,4 +32,27 @@ namespace MineFrog
 			_isEnabled = false;
 		}
 	}
+
+	public struct Averager
+	{
+		private long _sum;
+		private int _count;
+
+		public void Add(long number)
+		{
+			_sum += number;
+			_count++;
+		}
+		public float Average()
+		{
+			if (_count == 0) return 0;
+			return (float)_sum/_count;
+		}
+
+		public void Clear()
+		{
+			_sum = 0;
+			_count = 0;
+		}
+	}
 }

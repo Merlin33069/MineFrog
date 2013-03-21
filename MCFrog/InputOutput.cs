@@ -22,10 +22,14 @@ namespace MineFrog
 		{
 			while (!Shutdown)
 			{
+				//TODO implement backspace?
+
 				ConsoleKeyInfo keyinfo = Console.ReadKey(true);
 				char keyChar = keyinfo.KeyChar;
 				if (keyChar == '\r')
 				{
+					Console.WriteLine("");
+
 					Messagepart = Messagepart.Trim();
 
 					if (Messagepart != "")
@@ -56,22 +60,22 @@ namespace MineFrog
 
 		public static void Log(string message, ConsoleColor textColor, ConsoleColor backgroundColor)
 		{
-			if (Messagepart.Trim() != "")
-			{
-				if (Console.CursorTop > 0)
-					Console.SetCursorPosition(0, Console.CursorTop);
-			}
+			//if (Messagepart.Trim() != "")
+			//{
+			//    if (Console.CursorTop > 0)
+			//        Console.SetCursorPosition(0, Console.CursorTop);
+			//}
 
 			Console.ForegroundColor = textColor;
 			Console.BackgroundColor = backgroundColor;
 			Console.WriteLine(message.PadRight(Console.WindowWidth - 1));
 			Console.ResetColor();
 
-			if (Messagepart.Trim() != "")
-			{
-				Console.Write(Messagepart);
-				//Console.SetCursorPosition(messagepart.Length, Console.CursorTop);
-			}
+			//if (Messagepart.Trim() != "")
+			//{
+			//    Console.Write(Messagepart);
+			//    //Console.SetCursorPosition(messagepart.Length, Console.CursorTop);
+			//}
 		}
 
 		public static void Log(string message, LogTypesEnum logTypes)

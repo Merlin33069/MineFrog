@@ -25,7 +25,7 @@
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
+    <OutputPath>..\StartConsole\bin\Release\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -34,12 +34,15 @@
     <Reference Include="System" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CmdBenchMarking.cs" />
     <Compile Include="CmdDatabase.cs" />
     <Compile Include="CmdSave.cs" />
     <Compile Include="CmdWater.cs" />
     <Compile Include="CmdLava.cs" />
     <Compile Include="CmdSetRank.cs" />
     <Compile Include="CmdHistory.cs" />
+    <Compile Include="Goto.cs" />
+    <Compile Include="Level.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

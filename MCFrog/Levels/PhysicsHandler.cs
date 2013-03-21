@@ -8,7 +8,7 @@ namespace MineFrog
 	{
 		public readonly Level Level;
 
-		public int ChecksPerTick = 250;
+		public int ChecksPerTick = 20;
 		public bool FiniteLiquids = true;
 		public int Interval = 10;
 

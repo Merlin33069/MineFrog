@@ -54,6 +54,7 @@ namespace MineFrog.Blocks
 			BlockPos aboveBlockPos = blockPos.Diff(0, 1, 0);
 
 			int abovePos = level.PosToInt(aboveBlockPos);
+
 			byte type = level.BlockData[abovePos];
 
 			if (LightPass.Contains(type)) return;
@@ -193,7 +194,7 @@ namespace MineFrog.Blocks
 			var belowPos = blockPos.Below;
 
 			if (!BlockCheck(belowPos))
-				blockPos.Around(BlockCheck);
+			    blockPos.Around(BlockCheck);
 		}
 
 		bool BlockCheck(BlockPos block)

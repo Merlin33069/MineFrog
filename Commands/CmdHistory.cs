@@ -36,8 +36,8 @@ namespace Commands
 
 		public override void PlayerUse(Player p, string[] parameters, string fullCommand)
 		{
-			p._enableHistoryMode = !p._enableHistoryMode;
-			p.SendMessage("History mode is now: " + p._enableHistoryMode);
+			p.EnableHistoryMode = !p.EnableHistoryMode;
+			p.SendMessage("History mode is now: " + p.EnableHistoryMode);
 		}
 	}
 }

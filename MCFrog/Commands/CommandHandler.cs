@@ -18,6 +18,7 @@ namespace MineFrog.Commands
 
 		internal void LoadCommands()
 		{
+			//Console.WriteLine("Loading Commands");
 			foreach (string fileOn in Directory.GetFiles(Directory.GetCurrentDirectory()))
 			{
 				FileInfo file = new FileInfo(fileOn);

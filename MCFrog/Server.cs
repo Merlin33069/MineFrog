@@ -184,7 +184,7 @@ namespace MineFrog
 
 		public static void Log(string message, LogTypesEnum logTypes)
 		{
-			InputOutput.Log(message, logTypes);
+			ThreadPool.QueueUserWorkItem(delegate { InputOutput.Log(message, logTypes); });
 		}
 
 		public static void Log(Exception e, LogTypesEnum logTypes)

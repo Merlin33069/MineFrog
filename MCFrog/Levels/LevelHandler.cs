@@ -6,7 +6,7 @@ namespace MineFrog
 	{
 		internal static Level Lobby;
 
-		internal static List<Level> Levels = new List<Level>();
+		public static List<Level> Levels = new List<Level>();
 		static readonly System.Timers.Timer LevelSaveCheckTimer = new System.Timers.Timer(10000);
 
 		public LevelHandler()

@@ -7,11 +7,11 @@ using MineFrog.Commands;
 
 namespace Commands
 {
-	public class CmdLava : CommandBase
+	public class CmdGoto : CommandBase
 	{
 		public override string Name
 		{
-			get { return "Lava"; }
+			get { return "Goto"; }
 		}
 		public override CommandTypes Type
 		{
@@ -31,13 +31,25 @@ namespace Commands
 		}
 		public override string[] Accessors
 		{
-			get { return new[] { "Lava" }; }
+			get { return new[] { "Goto" }; }
 		}
 
 		public override void PlayerUse(Player p, string[] parameters, string fullCommand)
 		{
-			p.EnableLavaMode = !p.EnableLavaMode;
-			p.SendMessage("Lava mode is now: " + p.EnableLavaMode);
+			if (parameters.Length == 0)
+			{
+				PlayerHelp(p);
+				return;
+			}
+			Level level = Level.Find(parameters[0]);
+			if (level == null) p.SendMessage("Not found!");
+			else
+			p.SwitchMap(level);
 		}
+		public override void PlayerHelp(Player p)
+		{
+			p.SendMessage("Invalid command usages!");
+		}
+
 	}
 }

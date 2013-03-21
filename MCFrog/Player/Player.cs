@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
@@ -24,9 +25,9 @@ namespace MineFrog
 		public byte UserId = 101; //This is the users ID in the session
 		public bool _isDisconnected;
 		public Pos _delta;
-		public bool _enableHistoryMode;
-		public bool _enableLavaMode;
-		public bool _enableWaterMode;
+		public bool EnableHistoryMode;
+		public bool EnableLavaMode;
+		public bool EnableWaterMode;
 		public string _ip;
 
 		public bool IsAdmin
@@ -110,6 +111,11 @@ namespace MineFrog
 		private Socket _socket;
 		private NetworkStream _stream;
 		public string Username;
+
+		public static Averager Average1 = new Averager();
+		public static Averager Average2 = new Averager();
+		public static Averager Average3 = new Averager();
+		public static Averager Average4 = new Averager();
 
 		internal Player(TcpClient client)
 		{
@@ -215,6 +221,7 @@ namespace MineFrog
 
 		private void HandleLogin(object incoming)
 		{
+			Stopwatch sw = Stopwatch.StartNew();
 			var data = (byte[]) incoming;
 
 			if (data[0] != ProtocolVersion)
@@ -227,13 +234,19 @@ namespace MineFrog
 			string hash = Asen.GetString(data, 65, 32).Trim();
 			byte type = data[129];
 
-			if (string.IsNullOrWhiteSpace(hash) || hash == "--" || hash != BitConverter.ToString(md5.ComputeHash(Asen.GetBytes(Configuration.ServerSalt + Username))).Replace("-", "").ToLower().TrimStart('0'))
+			Average1.Add(sw.ElapsedTicks);
+			sw = Stopwatch.StartNew();
+
+			if (hash != BitConverter.ToString(md5.ComputeHash(Asen.GetBytes(Configuration.ServerSalt + Username))).Replace("-", "").ToLower().TrimStart('0'))
 			{
 				SendKick("Account could not be verified, try again.");
 				Server.Log(Server.HeartBeat._hash + "", LogTypesEnum.Debug);
 				Server.Log("'" + hash + "' != '" + BitConverter.ToString(md5.ComputeHash(Asen.GetBytes(Configuration.ServerSalt + Username))).Replace("-", "").ToLower().TrimStart('0') + "'", LogTypesEnum.Debug);
 				return;
 			}
+
+			Average2.Add(sw.ElapsedTicks);
+			sw = Stopwatch.StartNew();
 
 			pdb = PDB.Find(Username.Trim().ToLower());
 			if(pdb == null)
@@ -256,14 +269,15 @@ namespace MineFrog
 				UID = pdb.UID;
 			}
 
-			Server.Log(Username + " Logging in with hash: " + hash + " and TYPE: " + type, LogTypesEnum.Info);
-			SendGlobalMessage(Username + " Logged In.");
+			Average3.Add(sw.ElapsedTicks);
+			sw = Stopwatch.StartNew();
 
+			SendGlobalMessage(Username + " Logged In.");
 			PlayerHandler.Connections.Remove(this);
 			UserId = FreeId();
-			Server.Log(UserId + "", LogTypesEnum.Info);
 			PlayerHandler.Players.Add(UserId, this);
-
+			Average4.Add(sw.ElapsedTicks);
+			
 			SendMap();
 
 			_isLoggedIn = true;
@@ -299,7 +313,7 @@ namespace MineFrog
 
 			byte oldBlock = Level.BlockData[blockPos];
 
-			if (_enableHistoryMode)
+			if (EnableHistoryMode)
 			{
 				SendBlockChange(x, y, z, oldBlock);
 				var hD = Server.HistoryController.GetData(Level.Name, blockPos);
@@ -321,12 +335,12 @@ namespace MineFrog
 				SendBlockChange(x, y, z, oldBlock);
 				return;
 			}
-			if (_enableWaterMode)
+			if (EnableWaterMode)
 			{
 				Level.PlayerBlockChange(this, x, y, z, (byte) MCBlocks.Water);
 				return;
 			}
-			if (_enableLavaMode)
+			if (EnableLavaMode)
 			{
 				Level.PlayerBlockChange(this, x, y, z, (byte) MCBlocks.Lava);
 				return;
@@ -495,196 +509,6 @@ namespace MineFrog
 				
 			else
 				SendMessage("Command " + accessor + " does not exist!");
-
-
-			//if (command[0] == "historymode")
-			//{
-			//    _enableWaterMode = false;
-			//    _enableLavaMode = false;
-
-			//    _enableHistoryMode = !_enableHistoryMode;
-			//    SendMessage("History mode is " + _enableHistoryMode.ToString());
-			//}
-			//else if (command[0] == "water")
-			//{
-			//    _enableHistoryMode = false;
-			//    _enableLavaMode = false;
-
-			//    _enableWaterMode = !_enableWaterMode;
-			//    SendMessage("Water mode is " + _enableWaterMode.ToString());
-			//}
-			//else if (command[0] == "lava")
-			//{
-			//    _enableHistoryMode = false;
-			//    _enableWaterMode = false;
-
-			//    _enableLavaMode = !_enableLavaMode;
-			//    SendMessage("Lava mode is " + _enableLavaMode.ToString());
-			//}
-			//else if (command[0] == "level" || command[0] == "levels")
-			//{
-			//    if (command.Length == 1)
-			//    {
-			//        SendMessage("You are currently on: " + Level.Name);
-			//        SendMessage("Possible SubCommands:");
-			//        SendMessage("loaded");
-			//        SendMessage("new <name> (Size x,y,z) (type)");
-			//    }
-			//    else
-			//        switch (command[1].ToLower())
-			//        {
-			//            case "loaded":
-			//                SendMessage("Loaded Levels:");
-			//                foreach (Level l in LevelHandler.Levels.ToArray())
-			//                {
-			//                    SendMessage(l.Name);
-			//                }
-			//                break;
-			//            case "new":
-			//                if (command.Length == 2)
-			//                {
-			//                    SendMessage("You at least need to enter a name!");
-			//                    return;
-			//                }
-			//                if (command.Length > 6 || (command.Length > 3 && command.Length != 6))
-			//                {
-			//                    SendMessage("Incorrect number of variables!");
-			//                    return;
-			//                }
-			//                if (command.Length == 6)
-			//                {
-			//                    try
-			//                    {
-			//                        string levelName = command[2];
-
-			//                        ushort levelSizeX = Convert.ToUInt16(command[3]);
-			//                        ushort levelSizeY = Convert.ToUInt16(command[4]);
-			//                        ushort levelSizeZ = Convert.ToUInt16(command[5]);
-
-			//                        Level l = Level.Find(levelName);
-			//                        if (l != null)
-			//                        {
-			//                            SendMessage("The level: " + levelName + " is already loaded!");
-			//                            return;
-			//                        }
-			//                        SendMessage("Generating new level: " + levelName);
-			//                        l = new Level(levelName, levelSizeX, levelSizeY, levelSizeZ);
-			//                        SendGlobalMessage("NEW LEVEL: " + l.Name);
-			//                    }
-			//                    catch
-			//                    {
-			//                        SendMessage("New level create failed!");
-			//                    }
-			//                }
-			//                else
-			//                {
-			//                    Level l = Level.Find(command[2]);
-			//                    if (l != null)
-			//                    {
-			//                        SendMessage("The level: " + command[2] + " is already loaded!");
-			//                        return;
-			//                    }
-			//                    SendMessage("Generating new level: " + command[2]);
-			//                    l = new Level(command[2], 64, 64, 64);
-
-			//                    SendGlobalMessage("NEW LEVEL: " + l.Name);
-			//                }
-			//                break;
-			//            case "load":
-			//                if (command.Length == 2)
-			//                {
-			//                    SendMessage("You at least need to enter a name!");
-			//                }
-			//                else
-			//                {
-			//                    Level l = Level.Find(command[2]);
-			//                    if (l != null)
-			//                    {
-			//                        SendMessage("The level: " + command[2] + " is already loaded!");
-			//                        return;
-			//                    }
-			//                    SendMessage("Loading level: " + command[2]);
-			//                    try
-			//                    {
-			//                        l = new Level(command[2], false);
-			//                    }
-			//                    catch (Exception e)
-			//                    {
-			//                        Console.WriteLine(e.Message);
-			//                        SendMessage("Level load failed!");
-			//                        return;
-			//                    }
-			//                    SendGlobalMessage("LOADED LEVEL: " + l.Name);
-			//                }
-			//                break;
-			//            case "unload":
-			//                if (command.Length == 1)
-			//                {
-			//                    SendMessage("You have to enter a name!");
-			//                }
-			//                else
-			//                {
-			//                    Level l = Level.Find(command[2]);
-
-			//                    if (l == null)
-			//                    {
-			//                        SendMessage("Level not found!");
-			//                        return;
-			//                    }
-			//                    if (l == LevelHandler.Lobby)
-			//                    {
-			//                        SendMessage("You cannot unload the lobby.");
-			//                        return;
-			//                    }
-			//                    SendMessage("Unloading: " + l.Name);
-			//                    l.Unload();
-
-			//                    Server.HistoryController.SaveHistory(l.Name);
-			//                    Server.HistoryController.UnloadHistory(l.Name);
-
-			//                    SendMessage("Done!");
-			//                }
-			//                break;
-			//        }
-			//}
-			//else if (command[0] == "goto")
-			//{
-			//    if (command.Length == 1)
-			//    {
-			//        SendMessage("You have to enter a name to switch levels!");
-			//        return;
-			//    }
-			//    if (command.Length == 4)
-			//    {
-			//        try
-			//        {
-			//            ushort x = Convert.ToUInt16(command[1]);
-			//            ushort y = Convert.ToUInt16(command[1]);
-			//            ushort z = Convert.ToUInt16(command[1]);
-
-			//            var newPosition = new Pos {X = x, Y = y, Z = z, Yaw = 0, Pitch = 0};
-
-			//            SendTeleportThisPlayer(newPosition);
-
-			//            return;
-			//        }
-			//        catch
-			//        {
-			//            SendMessage("Goto Failed!");
-			//            return;
-			//        }
-			//    }
-			//    Level l = Level.Find(command[1]);
-
-			//    if (l == null)
-			//    {
-			//        SendMessage("Level not found!");
-			//        return;
-			//    }
-			//    SwitchMap(l);
-
-			//    SendMessage("You are now on: " + Level.Name);
-			//}
 		}
 
 		private void SendPacket(Packet p)
@@ -741,7 +565,7 @@ namespace MineFrog
 			p.AddVar(motd);
 			p.AddVar((byte) (IsAdmin ? 100 : 0));
 
-			Server.Log("Send MOTD", LogTypesEnum.Debug);
+			//Server.Log("Send MOTD", LogTypesEnum.Debug);
 			SendPacket(p);
 			//Console.WriteLine(p.bytes.Count);
 
@@ -787,12 +611,12 @@ namespace MineFrog
 				Buffer.BlockCopy(buffer, length, tempbuffer, 0, buffer.Length - length);
 				buffer = tempbuffer;
 				send[1026] = (byte) (i*100/number);
-				Server.Log("Sending map part " + i, LogTypesEnum.Debug);
+				//Server.Log("Sending map part " + i, LogTypesEnum.Debug);
 				SendRaw(3, send);
 				Thread.Sleep(10);
 			}
 
-			Server.Log("Map sent, initializing", LogTypesEnum.Debug);
+			//Server.Log("Map sent, initializing", LogTypesEnum.Debug);
 
 			buffer = new byte[6];
 			HTNO((short) Level.SizeX).CopyTo(buffer, 0);
@@ -808,15 +632,18 @@ namespace MineFrog
 
 			SendTeleportThisPlayer(Level.SpawnPos);
 
-			Server.Log("map done", LogTypesEnum.Debug);
+			//Server.Log("map done", LogTypesEnum.Debug);
 		}
 
-		internal void SwitchMap(Level l)
+		public void SwitchMap(Level l)
 		{
+			Stopwatch sw = Stopwatch.StartNew();
 			OldLevel = Level;
 			Level = l;
 
 			SendMap();
+			sw.Stop();
+			Console.WriteLine("Level sent to player in: " + sw.ElapsedMilliseconds + " ms!");
 		}
 
 		internal static void SendGlobalChat(Player player, string message)
@@ -855,16 +682,27 @@ namespace MineFrog
 					p.SendPacket(packet);
 				}
 			}
+
+			if(true)
+			{
+				
+			}
 		}
 
 		internal static void SendGlobalMessage(string message)
 		{
 			Server.Log("!" + message, LogTypesEnum.Chat);
+			
+			if (PlayerHandler.Players.Count == 0) return;
 
-			var packet = new Packet {Id = PacketType.Message};
+			SendGlobalMessageActual(message);
+		}
+		private static void SendGlobalMessageActual(string message)
+		{
+			var packet = new Packet { Id = PacketType.Message };
 			packet.AddVar(0);
 			packet.AddVar(message);
-
+			
 			foreach (Player p in PlayerHandler.Players.Values.ToArray())
 			{
 				if (p.IsActive)

@@ -36,8 +36,8 @@ namespace Commands
 
 		public override void PlayerUse(Player p, string[] parameters, string fullCommand)
 		{
-			p._enableWaterMode = !p._enableWaterMode;
-			p.SendMessage("Water mode is now: " + p._enableWaterMode);
+			p.EnableWaterMode = !p.EnableWaterMode;
+			p.SendMessage("Water mode is now: " + p.EnableWaterMode);
 		}
 	}
 }
