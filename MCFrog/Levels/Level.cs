@@ -22,7 +22,7 @@ namespace MineFrog
 
 		public string Name;
 		public PhysicsHandler Physics;
-		public FlatGrassGenerator fgg;
+		public LevelGenerator Generator;
 		public List<Player> Players = new List<Player>();
 		public ushort SizeX;
 		public ushort SizeY;
@@ -174,7 +174,7 @@ namespace MineFrog
 
 			BlockData = new byte[SizeX*SizeY*SizeZ];
 
-			fgg = new FlatGrassGenerator(this);
+			Generator = new FlatGrassGenerator(this);
 
 			Physics = new PhysicsHandler(this, true);
 
