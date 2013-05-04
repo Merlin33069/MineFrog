@@ -59,7 +59,7 @@ namespace MineFrog.HeartBeat
 			
 			string postVars = _staticVars;
 
-			const string url = "http://www.minecraft.net/heartbeat.jsp";
+			const string url = "https://minecraft.net/heartbeat.jsp";
 
 			postVars += "&salt=" + Configuration.ServerSalt;
 			postVars += "&users=" + currentPlayers;

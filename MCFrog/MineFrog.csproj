@@ -47,6 +47,7 @@
     <Compile Include="Commands\CommandBase.cs" />
     <Compile Include="Commands\CommandHandler.cs" />
     <Compile Include="Configuration.cs" />
+    <Compile Include="Levels\LevelGenerator.cs" />
     <Compile Include="MCColor.cs" />
     <Compile Include="Player\ConnectionHandler.cs" />
     <Compile Include="Database\Database.cs" />

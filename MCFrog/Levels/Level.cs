@@ -22,6 +22,7 @@ namespace MineFrog
 
 		public string Name;
 		public PhysicsHandler Physics;
+		public LevelGenerator Generator;
 		public List<Player> Players = new List<Player>();
 		public ushort SizeX;
 		public ushort SizeY;
@@ -173,24 +174,7 @@ namespace MineFrog
 
 			BlockData = new byte[SizeX*SizeY*SizeZ];
 
-			var half = (ushort) (SizeY/2);
-			for (ushort x = 0; x < SizeX; ++x)
-			{
-				for (ushort z = 0; z < SizeZ; ++z)
-				{
-					for (ushort y = 0; y < SizeY; ++y)
-					{
-						if (y != half)
-						{
-							SetTile(x, y, z, (byte) ((y >= half) ? MCBlocks.Air : MCBlocks.Dirt));
-						}
-						else
-						{
-							SetTile(x, y, z, (byte) MCBlocks.Grass);
-						}
-					}
-				}
-			}
+			Generator = new FlatGrassGenerator(this);
 
 			Physics = new PhysicsHandler(this, true);
 
