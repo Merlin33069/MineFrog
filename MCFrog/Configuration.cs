@@ -6,7 +6,7 @@
 		internal static byte MAXPLAYERS = 100;
 		internal static bool PUBLIC = true;
 		internal static byte VERSION = 7;
-        internal static bool VERIFY = true;
+		internal static bool VERIFY = true;
 		internal static string ServerName = "[MineFrog] Alpha Server";
 		internal static string ServerMotd = "Alpha MCFrog Server +hax";
 		internal static string ServerSalt = "th1515A5al7";
