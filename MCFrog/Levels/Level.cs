@@ -175,7 +175,6 @@ namespace MineFrog
 			BlockData = new byte[SizeX*SizeY*SizeZ];
 
 			fgg = new FlatGrassGenerator(this);
-			fgg.Generate(this);
 
 			Physics = new PhysicsHandler(this, true);
 
