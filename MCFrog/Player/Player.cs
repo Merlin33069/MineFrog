@@ -236,14 +236,16 @@ namespace MineFrog
 
 			Average1.Add(sw.ElapsedTicks);
 			sw = Stopwatch.StartNew();
-
-			if (hash != BitConverter.ToString(md5.ComputeHash(Asen.GetBytes(Configuration.ServerSalt + Username))).Replace("-", "").ToLower().TrimStart('0'))
-			{
-				SendKick("Account could not be verified, try again.");
-				Server.Log(Server.HeartBeat._hash + "", LogTypesEnum.Debug);
-				Server.Log("'" + hash + "' != '" + BitConverter.ToString(md5.ComputeHash(Asen.GetBytes(Configuration.ServerSalt + Username))).Replace("-", "").ToLower().TrimStart('0') + "'", LogTypesEnum.Debug);
-				return;
-			}
+            if (Configuration.VERIFY)
+            {
+                if (hash != BitConverter.ToString(md5.ComputeHash(Asen.GetBytes(Configuration.ServerSalt + Username))).Replace("-", "").ToLower().TrimStart('0'))
+                {
+                    SendKick("Account could not be verified, try again.");
+                    Server.Log(Server.HeartBeat._hash + "", LogTypesEnum.Debug);
+                    Server.Log("'" + hash + "' != '" + BitConverter.ToString(md5.ComputeHash(Asen.GetBytes(Configuration.ServerSalt + Username))).Replace("-", "").ToLower().TrimStart('0') + "'", LogTypesEnum.Debug);
+                    return;
+                }
+            }
 
 			Average2.Add(sw.ElapsedTicks);
 			sw = Stopwatch.StartNew();
