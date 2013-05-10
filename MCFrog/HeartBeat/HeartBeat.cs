@@ -10,7 +10,7 @@ namespace MineFrog.HeartBeat
 		public string _hash;
 		public static string ServerURL;
 		static string _staticVars;
-		public byte CurrentPlayers = 0;
+		public byte CurrentPlayers = (byte)PlayerHandler.Players.Count;
 
 
 		//static BackgroundWorker worker;

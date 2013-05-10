@@ -236,8 +236,12 @@ namespace MineFrog
 
 			Average1.Add(sw.ElapsedTicks);
 			sw = Stopwatch.StartNew();
-            if (Configuration.VERIFY)
+            if (Configuration.VERIFY && _ip != "127.0.0.1")
             {
+                if (PlayerHandler.Players.Count >= Configuration.MAXPLAYERS)
+                {
+                    SendKick("Server is full!");
+                }
                 if (hash != BitConverter.ToString(md5.ComputeHash(Asen.GetBytes(Configuration.ServerSalt + Username))).Replace("-", "").ToLower().TrimStart('0'))
                 {
                     SendKick("Account could not be verified, try again.");
