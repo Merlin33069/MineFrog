@@ -15,7 +15,7 @@ namespace MineFrog
 		private const string CompressedExtension = ".LvC";
 		private const string BackupExtension = ".bak";
 		private const int HeaderSize = 82;
-		private readonly ASCIIEncoding _encode= new ASCIIEncoding();
+		private readonly ASCIIEncoding _encode = new ASCIIEncoding();
 		//private readonly FileStream _fileHandle;
 		public byte[] BlockData;
 		public bool IsUnloaded = false;
@@ -64,7 +64,7 @@ namespace MineFrog
 				try
 				{
 					Name = fileName;
-					Create(128, 64, 128);
+					Create(128, 64, 128, "flatgrass");
 					FullSave();
 				}
 				catch (Exception e)
@@ -72,7 +72,7 @@ namespace MineFrog
 					Server.Log(e, LogTypesEnum.Error);
 				}
 			}
-			
+
 
 			Server.HistoryController.LoadHistory(Name);
 			UncompressAndCreateHandle();
@@ -80,10 +80,15 @@ namespace MineFrog
 
 		public Level(string name, ushort x, ushort y, ushort z)
 		{
+			new Level(name, x, y, z, "flatgrass");
+		}
+
+		public Level(string name, ushort x, ushort y, ushort z, string type)
+		{
 			try
 			{
 				Name = name;
-				Create(x, y, z);
+				Create(x, y, z, type);
 				FullSave();
 
 				Server.HistoryController.LoadHistory(Name);
@@ -141,9 +146,9 @@ namespace MineFrog
 			BuildPermissions = header[80];
 			VisitPermissions = header[81];
 
-			Physics = new PhysicsHandler(this, physics) {Realistic = realistic};
+			Physics = new PhysicsHandler(this, physics) { Realistic = realistic };
 
-			int blockCount = SizeX*SizeY*SizeZ;
+			int blockCount = SizeX * SizeY * SizeZ;
 			BlockData = new byte[blockCount];
 			gzipStream.Read(BlockData, 0, blockCount);
 
@@ -156,7 +161,7 @@ namespace MineFrog
 			Console.WriteLine("Level loaded from disk in: " + sw.ElapsedMilliseconds + " ms!");
 		}
 
-		public void Create(ushort inx, ushort iny, ushort inz) //todo add type
+		public void Create(ushort inx, ushort iny, ushort inz, string type)
 		{
 			SizeX = inx;
 			SizeY = iny;
@@ -165,16 +170,24 @@ namespace MineFrog
 
 			SpawnPos = new Pos
 						   {
-							   X = (ushort) ((SizeX*32)/2),
-							   Y = (ushort) (((SizeY*32)/2) + 64),
-							   Z = (ushort) ((SizeZ*32)/2),
+							   X = (ushort)((SizeX * 32) / 2),
+							   Y = (ushort)(((SizeY * 32) / 2) + 64),
+							   Z = (ushort)((SizeZ * 32) / 2),
 							   Pitch = 0,
 							   Yaw = 0
 						   };
 
-			BlockData = new byte[SizeX*SizeY*SizeZ];
+			BlockData = new byte[SizeX * SizeY * SizeZ];
 
-			Generator = new FlatGrassGenerator(this);
+			switch (type)
+			{ //TODO: Add more level types.
+				case "flatgrass":
+					Generator = new FlatGrassGenerator(this);
+					break;
+				default:
+					Generator = new FlatGrassGenerator(this);
+					break;
+			}
 
 			Physics = new PhysicsHandler(this, true);
 
@@ -358,7 +371,7 @@ namespace MineFrog
 
 		public bool PhysicsBlockChange(BlockPos pos, MCBlocks type)
 		{
-			return PhysicsBlockChange(pos, (byte) type);
+			return PhysicsBlockChange(pos, (byte)type);
 		}
 
 		public byte GetTile(int pos)
@@ -378,16 +391,16 @@ namespace MineFrog
 
 		public MCBlocks GetTile(BlockPos pos)
 		{
-			return (MCBlocks) GetTile(pos.X, pos.Y, pos.Z);
+			return (MCBlocks)GetTile(pos.X, pos.Y, pos.Z);
 		}
 
 		public MCBlocks GetTileByOffset(BlockPos pos, int diffX, int diffY, int diffZ)
 		{
-			var x = (ushort) (pos.X + diffX);
-			var y = (ushort) (pos.Y + diffY);
-			var z = (ushort) (pos.Z + diffZ);
+			var x = (ushort)(pos.X + diffX);
+			var y = (ushort)(pos.Y + diffY);
+			var z = (ushort)(pos.Z + diffZ);
 
-			return (MCBlocks) GetTile(x, y, z);
+			return (MCBlocks)GetTile(x, y, z);
 		}
 
 		public bool NotInBounds(ushort x, ushort y, ushort z)
@@ -414,7 +427,7 @@ namespace MineFrog
 			{
 				return -1;
 			}
-			return x + z*SizeX + y*SizeXZmultiplied;
+			return x + z * SizeX + y * SizeXZmultiplied;
 		}
 
 		public int PosToInt(BlockPos pos)
@@ -426,18 +439,18 @@ namespace MineFrog
 		{
 			int index = pos;
 
-			var y = (ushort) (pos/SizeXZmultiplied);
-			pos -= y*SizeXZmultiplied;
-			var z = (ushort) (pos/SizeX);
-			pos -= z*SizeX;
-			var x = (ushort) pos;
+			var y = (ushort)(pos / SizeXZmultiplied);
+			pos -= y * SizeXZmultiplied;
+			var z = (ushort)(pos / SizeX);
+			pos -= z * SizeX;
+			var x = (ushort)pos;
 
 			return new BlockPos(x, y, z, index, this);
 		}
 
 		public int IntOffset(int pos, int x, int y, int z)
 		{
-			return pos + x + (z *SizeX) + (y *SizeXZmultiplied);
+			return pos + x + (z * SizeX) + (y * SizeXZmultiplied);
 		}
 
 		public static Level Find(string name)
@@ -495,14 +508,14 @@ namespace MineFrog
 			Index = pos;
 			InBounds = !l.NotInBounds(X, Y, Z);
 			BlockType = !InBounds ? (byte)255 : l.GetTile(Index);
-			BlockMCType = (MCBlocks) BlockType;
+			BlockMCType = (MCBlocks)BlockType;
 			Level.BlockPosCreationAverager.Add(sw.ElapsedTicks);
 		}
 		public BlockPos(int x, int y, int z, int pos, Level l)
 		{
 			Stopwatch sw = Stopwatch.StartNew();
-			X = (ushort) x;
-			Y = (ushort) y;
+			X = (ushort)x;
+			Y = (ushort)y;
 			Z = (ushort)z;
 			Level = l;
 			Index = pos;
@@ -538,10 +551,10 @@ namespace MineFrog
 			BlockMCType = (MCBlocks)BlockType;
 			Level.BlockPosCreationAverager.Add(sw.ElapsedTicks);
 		}
-		
+
 		public void Around(BlockCheck check)
 		{
-			for(var inx = -1; inx < 2; ++inx)
+			for (var inx = -1; inx < 2; ++inx)
 			{
 				for (var inz = -1; inz < 2; ++inz)
 				{
@@ -549,11 +562,11 @@ namespace MineFrog
 					if (inx == 0 && inz == 0) continue;
 
 					//This checks to make sure were not checking corners
-					if (Math.Abs(inx*inz) == 1) continue;
+					if (Math.Abs(inx * inz) == 1) continue;
 
 					//Create a new BlockPos struct
 					BlockPos blockPos = Diff(inx, 0, inz);
-					
+
 					//Check if were inbounds, if not we don't check this one
 					if (!blockPos.InBounds) continue;
 
@@ -565,7 +578,7 @@ namespace MineFrog
 
 		public BlockPos Diff(int x, int y, int z)
 		{
-			return new BlockPos((ushort) (X + x), (ushort) (Y + y), (ushort) (Z + z), Level.IntOffset(Index, x, y, z), Level);
+			return new BlockPos((ushort)(X + x), (ushort)(Y + y), (ushort)(Z + z), Level.IntOffset(Index, x, y, z), Level);
 		}
 	}
 }

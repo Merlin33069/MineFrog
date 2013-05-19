@@ -21,7 +21,7 @@ namespace MineFrog.Plugins
 			return false;
 		}
 
-		public virtual void OnServeStart()
+		public virtual void OnServerStart()
 		{
 
 		}
